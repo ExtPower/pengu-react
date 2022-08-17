@@ -1,0 +1,200 @@
+.balanceee {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mainHome {
+  display: flex;
+  height: 100%;
+}
+
+.leeftPart {
+  width: 70%;
+}
+.leeftPart.wallet {
+  display: flex;
+  flex-direction: column;
+}
+
+.rightPart {
+  width: 30%;
+  margin-left: 24px;
+  background: #fbfbfb;
+  padding-top: 1rem;
+  padding: 1rem 1rem 0 1rem;
+  border-left: 1.5px solid rgba(230, 231, 234, 0.58);
+}
+
+.innerBalancee {
+  display: flex;
+  align-items: flex-start;
+}
+
+.logText {
+  display: flex;
+  align-items: center;
+  padding: 15px 16px;
+  justify-content: start;
+  /* padding-right: 80px; */
+}
+
+.logText img {
+  margin-right: 10px;
+}
+.logTextNumber {
+  font-family: "Montserrat";
+  font-weight: 600;
+}
+
+.cardds {
+  border: 1px solid #f5f4f6;
+  border-radius: 20px;
+}
+
+.logText.logextra span {
+  display: flex;
+  color: #a0a1a9;
+  justify-content: center;
+  align-items: center;
+  font-size: 13px;
+}
+
+.logText.logextra span p {
+  font-size: 25px;
+  font-weight: bold;
+  padding: 0px 0px 10px 6px;
+}
+
+.logText.logextra:hover span {
+  color: #1d1c32;
+}
+
+.logText.logextra {
+  background: #f5f4f6;
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  /* padding-top: 22px; */
+}
+
+.logText.logextra span img {
+  padding-left: 8px;
+}
+
+.innerBalancee h2 {
+  margin: 0;
+  font-size: 60px;
+  font-family: "Montserrat";
+}
+
+.balanceeeItem {
+  width: 24%;
+}
+
+.mainBalancee h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.mainEntry {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+h4 {
+  margin: 2px 0px;
+}
+
+.contennts h4 {
+  font-family: "Montserrat";
+}
+
+.contennts h4 span {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+}
+.eentrryBalnce {
+  display: flex;
+  justify-content: space-around;
+  margin: 3px 0px;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+  padding: 5px 14px;
+  border-radius: 15px;
+  width: 15%;
+  align-items: center;
+}
+
+.eentryName span {
+  margin-left: 12px;
+}
+
+.eentryName {
+  display: flex;
+  align-items: center;
+}
+
+.navbarToolbar {
+  padding-right: 0 !important;
+  position: relative;
+  height: 64px;
+}
+
+span.namessChange {
+  font-size: 13px;
+  color: darkgrey;
+  font-weight: 600;
+}
+
+.prectagee {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.eentrryBalnce.bttunsEntrey {
+  box-shadow: none;
+  justify-content: flex-end;
+}
+
+.css-p55zm9-MuiButtonBase-root-MuiIconButton-root {
+  padding: 8px;
+  border-radius: 0px !important;
+}
+
+span.addBalncee {
+  display: flex;
+  border-radius: 8px;
+  padding: 7px 7px;
+  align-items: center;
+  padding-top: 11px;
+  margin-right: 15px;
+}
+
+span.removeBalncee {
+  display: flex;
+  border-radius: 8px;
+  padding: 11px 13px;
+  align-items: center;
+  padding: 14px !important;
+  /* box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; */
+  background-color: #f5f4f6;
+}
+
+span.prectagee.low.bnbs {
+  color: #699662;
+}
+
+span.prectagee.ok.okcol {
+  color: #966262;
+}
+/* span.addBalncee img {
+  position: relative;
+  top: 3px;
+} */
+
+.MuiToolbar-root {
+  background-color: white !important;
+  justify-content: space-between;
+}

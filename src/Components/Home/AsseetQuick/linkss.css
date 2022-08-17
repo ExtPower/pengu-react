@@ -1,0 +1,135 @@
+.linksMain {
+  display: flex;
+}
+
+.asseets {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+}
+
+.assetsPositioner {
+  position: absolute;
+  inset: 0;
+  overflow-y: scroll;
+}
+
+.assetsFade {
+  position: absolute;
+
+  inset: 0;
+  z-index: 3;
+  background: rgb(255, 255, 255);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 75%,
+    rgba(255, 255, 255, 0.5788516090029762) 88%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.quickLinks {
+  width: 40%;
+  margin-left: 20px;
+}
+
+.assetfleex {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-right: 2rem;
+}
+
+.assetImage {
+  position: relative;
+  top: 6px;
+}
+
+.mainassets {
+  border: 1px solid #e6e7ea;
+  border-radius: 15px;
+  padding: 16px;
+  /* max-height: 200px; */
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+.mainauicks {
+  display: flex;
+  padding: 8px 14px 0 0;
+  /* padding-left: 0; */
+  flex-wrap: wrap;
+}
+
+.auicklionkss {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  border-radius: 15px;
+  width: 45%;
+  margin: 8px 16px 0 0;
+  padding: 8px 9px;
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+
+.auicklionkss img {
+  margin-right: 5px;
+}
+
+.auicklionkss h4 {
+  font-size: 14px;
+  font-weight: 200;
+}
+.auicklionkss.bttnss {
+  box-shadow: none;
+  padding-left: 0;
+}
+.assetfleex h4,
+h5 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.assetfleex h4 {
+  color: black;
+  font-size: 25px;
+  font-family: "Montserrat";
+  font-weight: 600;
+}
+
+.assetfleex h5 {
+  color: #3d3b3f;
+}
+
+.assetfleex label {
+  color: #7f7f87;
+  font-size: 12px;
+}
+span.detail {
+  display: flex;
+  align-items: center;
+}
+
+span.detail img {
+  margin-right: 5px;
+}
+.auicklionkss.bttnss img {
+  cursor: pointer;
+}
+.auicklionkss.bttnss img {
+  margin-right: 15px;
+  background-color: #f5f4f6;
+  padding: 12px;
+  border-radius: 6px;
+  width: 45px;
+  /* box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; */
+}
+span.del_icon img {
+  padding: 14px !important;
+  /* box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; */
+}

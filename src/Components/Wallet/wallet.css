@@ -1,0 +1,370 @@
+.walletMainflex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+span.flexspan {
+  display: flex;
+  align-items: center;
+}
+
+.ins {
+  margin-right: 27px;
+  display: flex;
+  align-items: center;
+}
+
+.ins img {
+  margin-right: 5px;
+}
+
+.ins label {
+  font-size: 19px;
+  font-family: "Montserrat";
+  font-weight: 600;
+}
+
+span.checkeedd {
+  font-size: 14px;
+  color: #a0a1a9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+}
+
+.classwrap {
+  display: flex;
+  align-items: center;
+}
+
+span.shiftbUtn {
+  border: 1px solid #7a65fb;
+  padding: 12px 29px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #fff;
+  background: #7a65fb;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.optionss {
+  border: 1px solid #f5f4f6;
+  padding: 10px 21px;
+  width: 187px;
+  background: #f5f4f6;
+  color: #a6a2a9;
+  display: flex;
+  margin-right: 16px;
+  border-radius: 5px;
+}
+span.shiftbUtn img {
+  margin-right: 9px;
+}
+
+/* select {
+  border: 0px;
+  background: transparent;
+  color: #959199;
+} */
+
+select {
+  border: 0px;
+  color: #959199;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  background-position: calc(100% - 12px) center !important;
+  background: url("data:image/svg+xml,<svg height='10px' width='10px' viewBox='0 0 16 16' fill='%23000000' xmlns='http://www.w3.org/2000/svg'><path d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/></svg>")
+    no-repeat;
+  padding: 0px 34px 0px 0px;
+  border: none !important;
+  outline: none !important;
+}
+
+.optionss label {
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+span.shiftbUtn img {
+  margin-right: 9px;
+}
+
+.mainCard {
+  display: flex;
+  flex-wrap: wrap;
+  overflow-y: scroll;
+  max-height: 100vh;
+}
+
+.itemmWallet {
+  width: 23%;
+  background: #f5f4f6;
+  margin: 8px;
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.imggW img {
+  width: 100%;
+}
+.imggW {
+  background-color: #f5f4f6;
+  border-radius: 13px;
+}
+
+.contennts {
+  padding: 10px 27px;
+}
+.contennts p {
+  margin: 0px;
+}
+
+span.ests {
+  font-size: 12px;
+  color: #a29ca8;
+  margin-left: 4px;
+}
+
+.priceewalleet p {
+  margin-bottom: 0;
+}
+
+.walletMainflex {
+  margin-bottom: 20px;
+}
+
+.walletMainflex .priceewalleet h2 {
+  font-family: "Montserrat";
+  font-size: 30px;
+  margin: 5px 0;
+}
+
+.item.one label {
+  position: relative;
+  /* right: 24px; */
+}
+
+/* Cards onhover */
+.itemmWallet {
+  position: relative;
+  display: inline-block;
+  transition: all 0.2s linear;
+}
+.imggW {
+  display: flex;
+  position: relative;
+}
+.image-hover-text {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  opacity: 0;
+  cursor: default;
+  transition: opacity 0.2s linear;
+}
+
+.image-hover-text:hover {
+  opacity: 1;
+}
+.image-hover-text-bubble {
+  position: relative;
+  box-sizing: border-box;
+  top: 0;
+  left: 0;
+  right: 100%;
+  height: 100%;
+  text-align: center;
+  background: #7a65fb;
+  border-radius: 13px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  margin: 0 auto;
+  /* padding: 6% 8px 5px 8px; */
+  padding: 22px 8px 5px 8px;
+  overflow: hidden;
+  font-size: 17px;
+  text-align: center;
+  word-wrap: break-word;
+}
+
+.image-hover-text .image-hover-text-title {
+  font-size: 25px;
+  display: block;
+}
+.one {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  /* padding: 0px 10px; */
+}
+._img img {
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  margin: 0 10px;
+}
+.two_right img {
+  margin-right: 6px;
+  width: 8px;
+}
+.two_right.history {
+  padding-top: 6px;
+}
+.one h3 {
+  color: #fff;
+  padding: 0px 0px 0px 0px;
+  margin: 0px 26px 0px 0px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.two {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 0 0 10px;
+}
+.two_right {
+  display: flex;
+}
+.two h4 {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+.two_right {
+  display: flex;
+}
+.two_right h5 {
+  color: #fff;
+  cursor: pointer;
+}
+.his_icon img {
+  width: 12px;
+  height: 12px;
+  margin-left: 5px;
+}
+
+.shifftt {
+  position: relative;
+}
+
+.addWalletModal {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-100px);
+  left: calc(100% + 20px);
+  width: 344px;
+  height: 388px;
+
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0px 4px 40px rgba(0, 0, 0, 0.06);
+  /* backdrop-filter: blur(10px); */
+  /* Note: backdrop-filter has minimal browser support */
+
+  border-radius: 20px;
+  padding: 20px 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+.addWalletModalTitle {
+  font-size: 1rem !important;
+}
+
+.addWalletModalSubtitle {
+  color: #7b65fa;
+  font-size: 0.7rem !important;
+  font-weight: 300;
+  margin: 0 0 10px 0 !important;
+}
+
+.addWalletCurrentWalletsContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.addWalletRow {
+  width: 100%;
+  background: #f5f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 5px;
+  margin: 5px 0;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.addWalletRowInfo {
+  display: flex;
+  align-items: center;
+}
+
+.addWalletRowInfo img {
+  margin-right: 10px;
+}
+.addWalletRowInfo h3 {
+  font-size: 0.9rem;
+}
+
+.addWalletAddButton {
+  cursor: pointer;
+  background: #7b65fa;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5px;
+  padding: 12px 25px 10px 25px;
+  color: white;
+}
+
+.addWalletAddButton p {
+  margin-top: 0;
+  font-size: 0.85rem;
+  margin-left: 10px;
+}
+
+.addWalletContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: #f5f4f6;
+  border-radius: 15px;
+  padding: 20px;
+}
+.addWalletContainer h3 {
+  font-size: 0.85rem;
+  margin: 0;
+}
+.addWalletContainer h4 {
+  font-size: 0.8rem;
+  margin: 8px 0 12px 0;
+  color: #a0a1a9;
+  font-weight: 400;
+}
+.addWalletContainer input {
+  background: #a0a1a9;
+  border-radius: 5px;
+  border: none;
+  color: white;
+  margin: 5px 0;
+  padding: 15px 25px;
+  width: 100%;
+}
+.addWalletContainer input::placeholder {
+  color: white;
+  opacity: 1;
+}

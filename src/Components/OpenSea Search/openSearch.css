@@ -1,0 +1,516 @@
+.openSeaScreenContainer {
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+
+.search.openSearch {
+  width: 20%;
+  margin-bottom: 5px;
+}
+
+.profileSected {
+  display: flex;
+  align-items: center;
+}
+
+.profileSected .proffilles {
+  width: 20%;
+  margin-right: 20px;
+  border-radius: 12px;
+}
+.tticck {
+  margin: 0 20px 8px 5px;
+}
+.selectedInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.inweneedItem {
+  display: flex;
+  padding: 8px 16px;
+  border-radius: 15px;
+  box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+}
+
+.inweneedItem label {
+  margin: 0px 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ownedflex {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.measure.innnfle img {
+  width: 30px;
+  cursor: pointer;
+}
+
+.measure.innnfle {
+  display: flex;
+}
+
+.wallet.innnfle {
+  padding: 12px 14px;
+  border-radius: 7px;
+  background: #7a65fb;
+  width: 240px;
+}
+
+span.walletbtn label {
+  color: #fff;
+  margin-left: 8px;
+}
+
+.innnfle {
+  margin: 8px 12px;
+}
+img.leefftiImgpro {
+  width: 17%;
+  border-radius: 50%;
+}
+
+.leeffti {
+  display: flex;
+  width: 46%;
+  padding: 10px 15px;
+  align-items: center;
+  border-radius: 15px;
+  margin: 13px 7px 13px 0;
+  background: #fbfbfb;
+  align-items: center;
+  justify-content: space-between;
+}
+
+span.difff {
+  margin: 0px 17px 0 0;
+}
+
+img.leefftiBaln {
+  margin-right: 3px;
+  width: 0.5rem;
+}
+
+span.aaa {
+  display: flex;
+}
+
+label.uper {
+  font-weight: 600;
+}
+
+img.leefftiNftss {
+  width: 16px;
+  cursor: pointer;
+}
+
+.listingssnew {
+  display: flex;
+  flex-wrap: wrap;
+}
+/* 
+.leeffti {
+  display: flex;
+  width: 49%;
+  padding: 10px 15px;
+  align-items: center;
+  box-shadow: rgb(99 99 99 / 20%) 0px 2px 8px 0px;
+  border-radius: 45px;
+  margin: 3px;
+  align-items: center;
+} */
+.fffluuu.zyda {
+  width: 70%;
+}
+.listingssnew {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.mainHome.seaopeeeen {
+  margin: 15px 0px 0 0;
+  flex: 1;
+  min-height: 0;
+}
+.fffluuu {
+  width: 27%;
+}
+.leeffti.aki {
+  width: 100%;
+}
+
+.fffluuu h4 {
+  color: #999999;
+  margin: 18px;
+  margin-top: 5px;
+}
+
+.fffluuu.zyda {
+  width: 70%;
+}
+
+label.uper {
+  font-size: 13px;
+}
+
+button.buyyyy {
+  padding: 6px 16px;
+  border-radius: 15px;
+  background: #7b65fa;
+  border: 0;
+  color: #ffff;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.cryptosList {
+  display: flex;
+}
+
+.leeftnewList {
+  width: 80%;
+}
+
+.rightsaleList {
+  width: fit-content;
+}
+
+.statussOpen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  justify-content: space-around;
+}
+
+span.difff {
+  display: flex;
+  flex-direction: column;
+}
+
+span.ffleecbal {
+  display: flex;
+  align-items: center;
+}
+
+.leeffti {
+  display: flex;
+  width: 46%;
+  padding: 0px 8px 0 0;
+  align-items: center;
+  border-radius: 15px;
+  margin: 5px 7px 5px 0;
+  background: #fbfbfb;
+  align-items: center;
+  justify-content: space-between;
+  border-top-left-radius: 50px;
+  border-bottom-left-radius: 50px;
+}
+img.leefftiImgpro {
+  width: 45px;
+  border-radius: 50%;
+}
+
+.fffluuu {
+  display: flex;
+  flex-direction: column;
+}
+
+.openSeaListingsHeader {
+  margin-left: 0 !important;
+  margin-bottom: 10px !important;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+span.difff {
+  display: flex;
+  flex-direction: column;
+}
+span.difff div {
+  display: flex;
+}
+label.uper {
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+span.innnnnspanflex {
+  display: flex;
+  align-items: center;
+  font-size: 10px;
+  color: #a0a1a9;
+  font-family: "Montserrat";
+}
+span.addi {
+  font-size: 9px;
+  color: #7b65fa;
+  display: flex;
+  margin-left: 8px;
+  white-space: nowrap;
+}
+.leeftnewList {
+  border: 1px solid #e6e7ea;
+  padding: 10px 12px 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  border-radius: 16px;
+  flex: 1;
+}
+
+.rightsaleList {
+  background: #fbfbfb;
+  margin-left: 20px;
+  border-radius: 12px;
+  padding: 5px 30px 5px 30px;
+}
+
+.rightsaleList h4 {
+  color: #999999;
+  margin: 18px 30px 10px 0px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+label.percntagr {
+  font-size: 15px;
+  color: #5eb550;
+  padding: 0px 0px;
+}
+
+.numbr {
+  display: flex;
+  align-items: center;
+  margin: 5px 0px 5px 0;
+}
+
+span.numberdtail {
+  color: #000;
+  font-weight: 600;
+  font-size: 15px;
+  font-family: "Montserrat";
+}
+
+label.percntagr img {
+  width: 12px;
+}
+
+.numbr img {
+  width: 25px;
+  margin-right: 5px;
+}
+
+label.percntagr.discord {
+  color: #7b65fa;
+  font-size: 0.7rem;
+}
+.allPrriceFleex {
+  display: flex;
+  justify-content: space-between;
+}
+
+.OpeenAll-price {
+  border-radius: 12px;
+  background: #fbfbfb;
+  padding: 12px 15px;
+}
+
+.twiiterrs.status h4 {
+  color: #999999d6;
+  margin: 8px 15px 8px 0;
+  font-size: 1rem;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.iteemPriceall h4 {
+  font-size: 12px;
+}
+
+.iteemPriceall .numbr img {
+  width: 12px;
+  margin-right: 8px;
+}
+
+label.percntagr {
+  display: flex;
+}
+
+.statics {
+  background: #fbfbfb;
+  border-radius: 12px;
+  padding: 25px 23px;
+  margin: 17px 0px;
+}
+
+.itemStatics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rateStatics {
+  display: flex;
+  align-items: center;
+}
+
+.itemStatics .numbr img {
+  width: 11px;
+  margin-left: 12px;
+}
+
+label.staticsLabel {
+  font-size: 14px;
+  color: #999999;
+}
+.statics {
+  background: #fbfbfb;
+  border-radius: 12px;
+  padding: 25px 30px;
+  margin: 17px 0px 0 0;
+  /* flex: 1; */
+  min-height: 0;
+}
+
+.itemStatics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rateStatics {
+  display: flex;
+  align-items: center;
+}
+
+.itemStatics .numbr img {
+  width: 11px;
+  margin-left: 12px;
+  margin-right: 8px;
+}
+
+label.staticsLabel {
+  font-size: 14px;
+  color: #999999;
+  margin: 5px 0;
+}
+
+.CryptoPunks24 {
+  margin-bottom: 16px;
+}
+
+hr {
+  margin: 1px 0px;
+}
+
+.CryptoPunk.Statistics {
+  overflow-y: scroll;
+  max-height: 100%;
+}
+.CryptoPunk.Statistics h4 {
+  margin-bottom: 10px;
+}
+div#apexchartsg3nppzj3 {
+  margin-top: 50px !important;
+}
+
+.comboChartContainer {
+  margin-top: 20px !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: flex-end; */
+  min-height: 0;
+}
+
+.combochart {
+  flex: 1;
+  border: 1.5px solid rgba(230, 231, 234, 0.58);
+  border-radius: 15px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.search.openSearch {
+  background: #f5f4f6;
+  border: 0;
+  position: relative !important;
+}
+.twitter_ h4 {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.openSeaLeft {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+}
+
+.openSeaRight {
+  padding: 0 30px;
+  width: 40%;
+  max-height: calc(100vh - 64px);
+}
+
+.openStatisticsDividerLine {
+  width: 100%;
+  height: 1.5px;
+  background: rgba(230, 231, 234, 0.58);
+}
+
+.openSeaRightFlex {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.comboChartHeaderContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.comboChartHeaderText {
+  display: flex;
+  align-items: center;
+}
+
+.comboChartHeaderText h3 {
+  margin: 0 20px 0 0;
+}
+
+.comboChartHeaderText h4 {
+  color: #a0a1a9;
+  font-weight: 500;
+  margin-right: 10px;
+  cursor: pointer;
+}
+.comboChartHeaderText h4.active {
+  color: black;
+}
+
+.comboChartHeaderButtons {
+  display: flex;
+  align-items: center;
+}
+.comboChartHeaderButtons h5 {
+  color: #a0a1a9;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.comboChartHeaderButtons h5.active {
+  color: black;
+}

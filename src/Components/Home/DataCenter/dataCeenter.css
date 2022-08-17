@@ -1,0 +1,47 @@
+.flexCenter {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.dataceenter {
+  border: 1.5px solid rgba(230, 231, 234, 0.58);
+  padding: 10px 20px 0 20px;
+  border-radius: 22px;
+  margin-right: 20px;
+  width: 30%;
+}
+
+.dataMainCenter {
+  margin: 15px 0px;
+}
+.chartData {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0px;
+  align-items: center;
+}
+
+.amouunt {
+  font-family: "Montserrat";
+  font-weight: 600;
+  color: #a0a1a9;
+}
+
+.innereChart h4 {
+  margin: 0;
+  font-size: 22px;
+  margin-left: 6px;
+  font-family: "Montserrat";
+}
+
+.innereChart {
+  display: flex;
+  align-items: center;
+}
+/* .dataMainCenter h4 {
+    padding-bottom: 14px;
+} */
+
+.apexcharts-toolbar {
+  display: none !important;
+}

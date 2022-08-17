@@ -1,0 +1,555 @@
+.feed-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.search.openSearch {
+  background: #f5f4f6;
+  border: 0;
+}
+
+.topbarFeed {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.createTaskDivider {
+  width: calc(100% + 24px);
+  transform: translateX(-24px);
+  height: 1px;
+  background: rgba(230, 231, 234);
+}
+
+.topbtns {
+  display: flex;
+}
+
+.wallet.innnfle.eywhite {
+  width: 150px;
+  margin-left: 0;
+}
+
+.wallet.innnfle.clearall {
+  color: #000;
+  width: 150px;
+  background: #f5f4f6;
+  margin-left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.wallet.innnfle.clearall label {
+  color: #a0a1a9;
+}
+
+.taskItem {
+  display: flex;
+  background: #f5f4f6;
+  align-items: center;
+  border-radius: 10px;
+  border-top-left-radius: 23px;
+  border-bottom-left-radius: 23px;
+  position: relative;
+  margin: 0px 10px;
+}
+
+.taskItem img {
+  width: 44px;
+  border-radius: 47px;
+  position: relative;
+}
+
+span.backkintel img {
+  width: 20px;
+  border-radius: 0px;
+}
+
+span.backkintel {
+  position: absolute;
+  top: 0;
+  left: 24px;
+}
+
+.taskItem label {
+  font-weight: 500;
+  padding: 10px 26px;
+  font-size: 0.9rem;
+}
+.topfeedtask {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.headitem {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #e6e7ea;
+  border-bottom: 1px solid #e6e7ea;
+  padding: 20px 24px;
+  justify-content: space-between;
+}
+/* .headitem:nth-child(1) {
+  border-left: none;
+} */
+
+.heaasind h4 {
+  margin: 0;
+  font-weight: 500;
+}
+
+.headButns {
+  display: flex;
+  align-items: center;
+}
+
+.headButns img {
+  margin: 2px 7px;
+  cursor: pointer;
+}
+
+.heaasind label {
+  color: #918e95;
+  font-size: 12px;
+}
+
+.tableFeed {
+  margin-top: 20px;
+  /* border: 1px solid #E6E7EA; */
+}
+
+.tableColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e6e7ea;
+  min-width: 400px;
+}
+
+.tableColumn:nth-child(1) {
+  border-left: none;
+}
+
+.tableContentColumn {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.tbleHead {
+  display: flex;
+  justify-content: space-between;
+}
+
+.heaasind {
+  margin-right: 26px;
+}
+
+.tableFeed table {
+  border: 1px solid #e4e3e7;
+  border-left: none;
+  border-collapse: collapse;
+  width: 100%;
+}
+.tableFeed tbody {
+  overflow-y: scroll;
+}
+
+.tableFeed tr {
+  border: 1px solid #e4e3e7;
+}
+.tableFeed {
+  display: flex;
+}
+
+.tableFeed td {
+  border-bottom: 1px solid #f5f4f6;
+  padding: 20px 23px;
+}
+.tableFeed {
+  display: flex;
+  justify-content: center;
+  transform: translateX(-24px);
+  width: calc(100% + 24px);
+  overflow: hidden;
+}
+
+.tableFeedHorizontalScroll {
+  max-width: 100%;
+  display: flex;
+  overflow: scroll;
+}
+
+.upermonitr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.upermonitr img {
+  width: 46px;
+  border-radius: 50px;
+  align-items: start;
+}
+.upermonitr.activity img {
+  margin-right: 10px;
+}
+
+.upermonitr label {
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  cursor: pointer;
+}
+
+.upermonitr p {
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+.feedPostAuthorContainer {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+span.opption img {
+  border-radius: 0;
+  width: 15px;
+  cursor: pointer;
+}
+
+.downmonitr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.downmonitr img {
+  width: 16px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.downmonitr span {
+  font-size: 11px;
+  color: #a0a1a9;
+}
+
+.downmonitr a {
+  font-size: 12px;
+  color: #7a65fb;
+  position: absolute;
+  left: 66px;
+  cursor: pointer;
+}
+
+span.comments {
+  display: flex;
+}
+
+span.comments span {
+  margin: 0px 3px;
+  display: flex;
+}
+
+span.comments img {
+  width: 15px;
+}
+
+span.biance {
+  display: flex;
+  align-items: center;
+}
+
+span.biance img {
+  width: 12px;
+}
+
+span.biance span {
+  font-size: 12px;
+  margin: 4px 8px 4px 4px;
+  color: #a0a1a9;
+}
+
+span.biance p {
+  color: #7a65fb;
+  margin: 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+span.opption {
+  font-size: 12px;
+  position: absolute;
+  top: 5px;
+  right: 0;
+}
+
+span.opption.activity {
+  position: relative;
+  top: 0;
+}
+
+td.difff {
+  padding: 20px 17px;
+}
+
+span.mntiproo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: flex-start;
+}
+
+.feedVerifiedIcon {
+  position: absolute;
+  width: 0.6rem !important;
+  top: -3px;
+  left: calc(100% + 1px);
+}
+
+span.diflex {
+  display: flex;
+  align-items: center;
+}
+
+span.timee {
+  display: flex;
+  color: #a0a1a9;
+}
+
+span.timee img {
+  margin-left: 9px;
+}
+input.search {
+}
+
+input.search.task {
+  width: 200px;
+  padding: 10px 16px 10px 15px;
+  background: #f5f4f6;
+  border: 0px;
+  font-size: 0.7rem;
+  border-radius: 5px !important;
+  height: 43px;
+}
+input.search.task::placeholder {
+  color: #a0a1a9;
+  opacity: 1;
+}
+
+.taskCreateMain {
+  padding-top: 0.5rem;
+}
+
+.taskCreateMain h4 {
+  margin-bottom: 10px;
+}
+.taskCreateMain h5 {
+  font-weight: 500;
+  margin: 5px 0px;
+  font-size: 0.85rem;
+}
+
+.btnsstask {
+  display: flex;
+}
+
+button.btntask {
+  padding: 12px 15px;
+  margin: 0 0 6px 0;
+  margin-right: 10px;
+  border: 0px;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  color: #a0a1a9;
+  background: #f5f4f6;
+  height: 43px;
+  cursor: pointer;
+}
+
+button.btntask.activeTask {
+  background: #a0a1a9;
+  color: #fff;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  height: 43px;
+}
+
+.divCheckbox {
+  flex-direction: column;
+  display: flex;
+  margin-top: 2.8rem;
+}
+
+.divCheckbox span {
+  margin: 7px 0px;
+  display: flex;
+}
+
+.divCheckbox span img {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.divCheckbox label {
+  color: #a0a1a9;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.wallet.innnfle.eywhite.task {
+  margin: 5px 0;
+  cursor: pointer;
+}
+.wallet.innnfle.eywhite.task.opensea {
+  margin-top: 3.1rem;
+}
+
+.taskflex {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 3.5rem;
+}
+
+.itemtTask {
+  width: 27%;
+}
+
+.optionsTask {
+  padding: 0 0 6px 0;
+  position: relative;
+  width: fit-content;
+}
+
+.optionsTaskArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px !important;
+  right: 15px !important;
+  left: unset !important;
+  pointer-events: none;
+}
+
+.optionsTask.server select {
+  color: black;
+}
+
+.optionsTask img {
+  position: absolute;
+  width: 1.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 10px;
+}
+
+.optionsTask select {
+  background: #f5f4f6;
+  padding: 10px 47px 10px 15px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  height: 43px;
+  width: 200px;
+}
+
+.postInfoContainer {
+  margin-left: 10px;
+}
+
+.flexxExplane {
+  display: flex;
+}
+
+.itemCurrent {
+  width: 25%;
+}
+
+.itemCurrents {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.itemCurrentsInfoContainer {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.itemCurrentsImageContainer {
+  display: flex;
+  margin: 5px;
+  position: relative;
+}
+
+.itemCurrentsImageOverlay {
+  display: none;
+  width: 100%;
+  height: 100%;
+  background: rgba(160, 161, 169, 0.84);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50px;
+  justify-content: center;
+  align-items: center;
+}
+
+.itemCurrentsImageContainer:hover .itemCurrentsImageOverlay {
+  display: flex;
+}
+
+.flexitem {
+  width: 50%;
+  display: flex;
+  align-items: center;
+}
+
+/* .flexitem img {
+} */
+
+.flexitem label {
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.mntiimag img {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.walletbtn,
+.wallet.innnfle.eywhite span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.walletbtn,
+.wallet.innnfle.eywhite label {
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.mainCurrent {
+  margin-top: 0.5rem;
+}
+
+.mainCurrent h4 {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.itemCurrentSocialIcon {
+  width: 22.5px;
+}

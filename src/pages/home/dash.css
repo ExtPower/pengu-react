@@ -1,0 +1,152 @@
+a {
+  text-decoration: none;
+  color: #000;
+}
+button.MuiButtonBase-root.MuiIconButton-root.MuiIconButton-colorInherit.MuiIconButton-edgeStart.MuiIconButton-sizeMedium.LOGOO.css-p55zm9-MuiButtonBase-root-MuiIconButton-root
+  img {
+  width: 25px;
+}
+
+header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4.MuiAppBar-root.MuiAppBar-colorPrimary.MuiAppBar-positionFixed.mui-fixed.css-19z1ozs-MuiPaper-root-MuiAppBar-root {
+  background: transparent;
+  box-shadow: none;
+  left: 65px;
+  width: calc(100% - 65px);
+}
+.css-2dum1v-MuiDrawer-docked .MuiDrawer-paper {
+  width: calc(64px + 1px);
+  justify-content: space-between;
+}
+.search .css-1ptx2yq-MuiInputBase-root-MuiInput-root:after {
+  border: 0px !important;
+}
+
+.search .css-1ptx2yq-MuiInputBase-root-MuiInput-root:before {
+  border: 0px !important;
+}
+.search {
+  border: 1px solid rgba(230, 231, 234, 0.58);
+  padding: 2px 12px;
+  border-radius: 7px;
+  width: 100%;
+  position: absolute;
+  max-width: 450px;
+}
+@media screen and (max-width: 1450px) {
+  .search {
+    max-width: 350px;
+  }
+}
+
+.searchInput {
+  width: 100%;
+}
+
+.last {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.item.three.margin {
+  margin-top: 1.8rem;
+  margin-right: 1rem;
+}
+
+header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4.MuiAppBar-root.MuiAppBar-colorPrimary.MuiAppBar-positionFixed.mui-fixed.css-1191obr-MuiPaper-root-MuiAppBar-root {
+  background: transparent;
+}
+span.proffillee img {
+  width: 30px;
+}
+.item {
+  display: flex;
+  align-items: center;
+}
+button.MuiButtonBase-root.MuiIconButton-root.MuiIconButton-colorInherit.MuiIconButton-edgeStart.MuiIconButton-sizeMedium.LOGOO.css-q6oun
+  img {
+  width: 20px;
+}
+label.HeadingMain {
+  color: #000;
+  font-weight: 700;
+  font-family: "Montserrat";
+}
+.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation0.MuiDrawer-paper.MuiDrawer-paperAnchorLeft.MuiDrawer-paperAnchorDockedLeft.css-1l8j5k8 {
+  justify-content: space-between;
+}
+.MuiToolbar-root.MuiToolbar-gutters.MuiToolbar-regular.css-hyum1k-MuiToolbar-root {
+  display: flex;
+  align-items: center;
+  background: white !important;
+  background-color: white !important;
+  /* padding-left: 0; */
+  justify-content: space-between;
+  height: 64px;
+}
+header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4.MuiAppBar-root.MuiAppBar-colorPrimary.MuiAppBar-positionFixed.mui-fixed.css-168noda {
+  background: #fff;
+  width: calc(100% - 65px);
+}
+
+.item.two {
+  width: 33%;
+  align-items: center;
+  /* margin-left: auto; */
+  justify-content: flex-end;
+}
+
+span.noti {
+  padding: 5px;
+}
+
+/* .lastItem {
+  padding: 0px 0px;
+} */
+
+.lastItem {
+  padding: 0px 10px 0px 0px;
+  /* padding: 0px 2px; */
+}
+
+.navbarRightButtons {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+input#input-with-icon-textfield {
+  /* max-width: 300px !important; */
+  font-size: 14px;
+  padding-bottom: 5px;
+  padding-top: 8px;
+}
+
+.search .MuiInput-underline::after {
+  display: none;
+}
+
+span.welcopmeInfo {
+  font-size: 11px;
+  color: #83868aa1;
+}
+
+.lastItemIteem {
+  margin: 5px;
+  cursor: pointer;
+}
+.MuiListItemButton-root.MuiListItemButton-gutters.MuiButtonBase-root.backlogg.css-1fqi8hc-MuiButtonBase-root-MuiListItemButton-root {
+  background: #7b65fa !important;
+  cursor: pointer;
+}
+
+.MuiListItemButton-root.MuiListItemButton-gutters.MuiButtonBase-root.seeetingss.css-1fqi8hc-MuiButtonBase-root-MuiListItemButton-root {
+  background-color: #f5f4f6;
+  border-radius: 5px;
+}
+.last_inner {
+  display: flex;
+}
+
+.MuiToolbar-root {
+  background-color: #fbfbfb !important;
+}

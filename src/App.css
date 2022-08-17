@@ -1,0 +1,345 @@
+h2 {
+  font-weight: 600;
+}
+
+.css-1fqi8hc-MuiButtonBase-root-MuiListItemButton-root:hover {
+  -webkit-text-decoration: none;
+  text-decoration: none;
+  border-radius: 5px;
+  background-color: white !important;
+}
+.MuiListItemButton-root:hover {
+  background-color: white !important;
+}
+
+.css-1fqi8hc-MuiButtonBase-root-MuiListItemButton-root {
+  border-radius: 5px !important;
+}
+
+li.MuiListItem-root.MuiListItem-gutters.css-uxa1ks-MuiListItem-root {
+  padding: 10px;
+  border-radius: 5px;
+}
+main.MuiBox-root.css-zxdg2z {
+  padding: 0 0 0 24px !important;
+}
+.MuiListItemButton-root.MuiListItemButton-gutters.MuiButtonBase-root.backlogg.css-1fqi8hc-MuiButtonBase-root-MuiListItemButton-root {
+  border-radius: 5px;
+}
+span.proffileeOb {
+  position: absolute;
+  right: 9px;
+  top: 6px;
+}
+
+span.proffillee {
+  position: relative;
+}
+
+img.opss {
+  width: 15px;
+}
+
+.LOGOO {
+  background: #e0e0e0 !important;
+  margin-right: 0 !important;
+  width: 100%;
+  height: 100%;
+}
+
+span.btnValue {
+  color: #a0a1a9;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+span.baaalImg {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+}
+
+span.baaalImg img {
+  width: 14px;
+}
+
+.logText.logextra {
+  max-height: 38px;
+}
+
+.cardds:hover .logextra {
+  background: #ebe8ff;
+  cursor: pointer;
+}
+span.prectagee.ok {
+  color: #699662;
+}
+
+span.prectagee.low {
+  color: #699662;
+}
+
+/* span.addBalncee { */
+/* background: #f5f4f6; */
+/* display: flex;
+  border-radius: 8px;
+  padding: 7px 7px;
+  align-items: center;
+  padding-top: 11px;
+  cursor: pointer;
+} */
+
+/* span.addBalncee {
+  display: flex;
+  border-radius: 8px;
+  padding: 11px 13px;
+  align-items: center;
+  padding: 3px !important;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  background-color: #F5F4F6;
+  justify-content: center;
+} */
+
+span.addBalncee {
+  display: flex;
+  border-radius: 8px;
+  padding: 11px 13px;
+  align-items: center;
+  padding: 14px !important;
+  /* box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; */
+  background-color: #f5f4f6;
+  justify-content: center;
+}
+
+span.addBalncee:hover {
+  /* background: #f5f4f6; */
+  display: flex;
+  border-radius: 8px;
+  padding: 7px 7px;
+  align-items: center;
+  padding-top: 11px;
+  cursor: pointer;
+}
+span.removeBalncee:hover {
+  /* background: #f5f4f6; */
+
+  display: flex;
+  /* border-radius: 8px;m */
+  padding: 11px 13px;
+  align-items: center;
+  cursor: pointer;
+}
+.innerBalancee {
+  display: flex;
+  align-items: center !important;
+}
+span.innerdataEETS {
+  display: flex;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  top: -5px;
+  left: 105%;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+main.MuiBox-root.css-zxdg2z {
+  /* background: #fbfbfb !important; */
+  background: white;
+}
+.lastItemIteem {
+  margin: 5px;
+}
+
+header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4.MuiAppBar-root.MuiAppBar-colorPrimary.MuiAppBar-positionFixed.mui-fixed.css-168noda {
+  box-shadow: none !important;
+}
+
+.MuiFormControl-root.MuiTextField-root.css-i44wyl {
+  border: 0px !important;
+}
+
+.css-1vv4lmi::before {
+  border-bottom: 0px !important;
+}
+
+.MuiListItemButton-root.MuiListItemButton-gutters.MuiButtonBase-root.seeetingss.css-kue437 {
+  background: #f2f2f3 !important;
+  border-radius: 5px;
+}
+.MuiListItemButton-root.MuiListItemButton-gutters.MuiButtonBase-root.backlogg.css-kue437 {
+  background: #7b65fa !important;
+  border-radius: 7px;
+}
+
+li.MuiListItem-root.MuiListItem-gutters.css-qkz7df {
+  padding: 7px 7px;
+  border-radius: 12px;
+}
+
+button.MuiButtonBase-root.MuiIconButton-root.MuiIconButton-colorInherit.MuiIconButton-edgeStart.MuiIconButton-sizeMedium.LOGOO.css-q6oun {
+  background: #e0e0e0;
+  border-radius: 0px;
+}
+
+@media screen and (max-width: 1366px) {
+  .item.one {
+    /* width: 37% !important; */
+    width: 32% !important;
+  }
+  .fffluuu {
+    width: 55% !important;
+  }
+
+  .leeffti {
+    width: 75% !important;
+  }
+  .auicklionkss {
+    width: 40% !important;
+  }
+
+  .listingssnew {
+    max-height: 200px !important;
+    overflow-y: scroll !important;
+  }
+  .fffluuu.zyda {
+    width: 70% !important;
+  }
+}
+@media screen and (max-width: 1280px) {
+  .auicklionkss.bttnss img {
+    cursor: pointer !important;
+  }
+
+  .dataceenter {
+    width: 45% !important;
+    margin: 6px 10px !important;
+  }
+
+  .linksMain {
+    display: block !important;
+  }
+
+  .quickLinks {
+    width: 100% !important;
+  }
+
+  .collectionsMain {
+    padding: 6px !important;
+  }
+
+  .mainHome {
+    margin-top: 22px !important;
+  }
+
+  .updateFFleex {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  span.veresion {
+    width: 100% !important;
+  }
+
+  buttton.uupdatebtn {
+    margin: 20px !important;
+  }
+  .asseets {
+    width: 100% !important;
+  }
+  .item.one {
+    width: 25% !important;
+  }
+  buttton.uupdatebtn {
+    padding: 12px 8px !important;
+  }
+  .innerBalancee h2 {
+    margin: 0;
+    font-size: 45px !important;
+  }
+  span.flexspan {
+    display: block !important;
+  }
+
+  .priceewalleet h2 {
+    margin: 0 !important;
+  }
+
+  .contennts {
+    padding: 10px 10px !important;
+  }
+  .itemmWallet {
+    width: 29% !important;
+  }
+
+  .allPrriceFleex {
+    flex-wrap: wrap !important;
+  }
+
+  .leeftnewList {
+    display: block !important;
+  }
+
+  .fffluuu.zyda {
+    width: 100% !important;
+  }
+
+  .leeffti {
+    width: 100% !important;
+  }
+
+  .leeffti.aki {
+    width: 100% !important;
+  }
+
+  .fffluuu {
+    width: 100% !important;
+  }
+
+  .leeftnewList {
+    max-height: 300px !important;
+    overflow-y: scroll !important;
+  }
+  .search.openSearch {
+    width: 100% !important;
+  }
+  .OpeenAll-price {
+    max-height: 300px !important;
+    overflow-y: scroll !important;
+  }
+  .Main_content {
+    margin-top: 26px !important;
+  }
+  .itemtTask {
+    width: 50% !important;
+  }
+  .taskItem {
+    margin: 10px 10px !important;
+  }
+}
+
+input:focus-visible {
+  outline: none !important;
+}
+.MuiToolbar-root {
+  background-color: #fbfbfb !important;
+}
