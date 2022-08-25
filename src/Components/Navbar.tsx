@@ -58,16 +58,15 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
           style={{
             left:
               location.pathname !== "/dashboard/Home" &&
-              location.pathname !== "/dashboard/Wallet"
+                location.pathname !== "/dashboard/Wallet"
                 ? 500
                 : "calc(500px - 24px)",
           }}
         >
           <TextField
             id="input-with-icon-textfield"
-            placeholder={`Search ${
-              location.pathname === "/dashboard/Wallet" ? "Assets" : "Home"
-            }`}
+            placeholder={`Search ${location.pathname === "/dashboard/Wallet" ? "Assets" : "Home"
+              }`}
             className="searchInput"
             InputProps={{
               startAdornment: (
@@ -93,12 +92,11 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
           <div
             className={`item three 
             
-            ${
-              location.pathname !== "/dashboard/Home" &&
-              location.pathname !== "/dashboard/Wallet"
+            ${location.pathname !== "/dashboard/Home" &&
+                location.pathname !== "/dashboard/Wallet"
                 ? "margin"
                 : ""
-            }
+              }
             
             `}
             style={{

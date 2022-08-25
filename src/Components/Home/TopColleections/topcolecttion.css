@@ -77,7 +77,7 @@ span.veresion {
   align-items: center;
 }
 
-buttton.uupdatebtn {
+button.uupdatebtn {
   background: #f5f4f6;
   padding: 0 46px;
   border-radius: 5px;
@@ -89,11 +89,11 @@ buttton.uupdatebtn {
   align-items: center;
   height: 100%;
 }
-buttton.uupdatebtn img {
+button.uupdatebtn img {
   margin: 0px 8px;
 }
 
-buttton.uupdatebtn:hover {
+button.uupdatebtn:hover {
   cursor: pointer;
   background: #7b65fa;
   color: #ffff;

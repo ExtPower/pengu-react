@@ -105,7 +105,7 @@ span.noti {
 } */
 
 .lastItem {
-  padding: 0px 10px 0px 0px;
+  margin: 0px 10px 0px 0px;
   /* padding: 0px 2px; */
 }
 
@@ -131,7 +131,7 @@ span.welcopmeInfo {
 }
 
 .lastItemIteem {
-  margin: 5px;
+  padding: 5px;
   cursor: pointer;
 }
 .MuiListItemButton-root.MuiListItemButton-gutters.MuiButtonBase-root.backlogg.css-1fqi8hc-MuiButtonBase-root-MuiListItemButton-root {

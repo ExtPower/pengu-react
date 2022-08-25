@@ -16,11 +16,11 @@ function CheeckUpdate() {
         <div className="versionContainer">
           <span className="veresion">v3.4</span>
         </div>
-        <buttton className="uupdatebtn">
+        <button className="uupdatebtn">
           <img src={Recheeck}></img>
           <img src={Checkico}></img>
           Check for updates
-        </buttton>{" "}
+        </button>{" "}
         <a href="#" className="discord-button">
           <img src={Profile}></img>
           <img src={Scenewhite}></img>

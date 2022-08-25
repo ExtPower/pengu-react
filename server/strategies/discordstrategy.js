@@ -1,20 +1,27 @@
 const DiscordStrategy = require("passport-discord").Strategy,
     refresh = require("passport-oauth2-refresh");
 const passport = require("passport");
-const fetchNode = require("node-fetch");
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const axios = require('axios');
+
 // refresh.requestNewAccessToken('discord', profile.refreshToken, function (err, accessToken, refreshToken) {
 //     if (err)
 //         throw; // boys, we have an error here.
 
 //     profile.accessToken = accessToken; // store this new one for our new requests!
 // });
+function make_config(authorization_token) { // Define the function
+    var data = { // Define "data"
+        headers: { // Define "headers" of "data"
+            "authorization": `Bearer ${authorization_token}` // Define the authorization
+        }
+    };
+    return data; // Return the created object
+};
+
 function fetchDiscord(api, access_token) {
-    return fetchNode(`https://discord.com/api/${api}`, {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${access_token}`,
-        },
-    }).then(response => response.json());
+
+    return axios.get(`https://discord.com/api/${api}`, make_config(access_token))
 }
 function refreshToken(refreshToken) {
     return new Promise((resolve, reject) => {
@@ -47,49 +54,47 @@ passport.use(
             console.log("====================================");
             console.log(profile);
             console.log("====================================");
-            fetchDiscord(`guilds/${profile.guilds[0].id}/channels`, accessToken).then((response) => {
-                var username = `${profile.username}#${profile.discriminator}`;
-                var accessTokens = [
-                    { token: accessToken, id: profile.id },
-                    ...(req.session?.passport?.user?.accessTokens || []),
-                ];
-                var refreshTokens = [
-                    { token: refreshToken, id: profile.id },
-                    ...(req.session?.passport?.user?.refreshTokens || []),
-                ];
-                const user = { ...profile };
+            var username = `${profile.username}#${profile.discriminator}`;
+            var accessTokens = [
+                { token: accessToken, id: profile.id },
+                ...(req.session?.passport?.user?.accessTokens || []),
+            ];
+            var refreshTokens = [
+                { token: refreshToken, id: profile.id },
+                ...(req.session?.passport?.user?.refreshTokens || []),
+            ];
+            const user = { ...profile };
 
-                try {
-                    // const user = await DiscordUser.findOne({ discordId: profile.id });
-                    if (user) {
-                        console.log("User exists.");
-                        // await user.updateOne({
-                        //     username: `${profile.username}#${profile.discriminator}`,
-                        //     guilds: profile.guilds
-                        // });
-                        done(null, {
-                            user_id: user.id,
-                            guilds: user.guilds,
-                            email: user.email,
-                            username,
-                            accessTokens,
-                            refreshTokens,
-                        });
-                    } else {
-                        console.log("User does not exist");
-                        // const newUser = await DiscordUser.create({
-                        //     discordId: profile.id,
-                        //     username: profile.username,
-                        //     guilds: profile.guilds
-                        // });
-                        // const savedUser = await newUser.save();
-                        // done(null, savedUser);
-                    }
-                } catch (err) {
-                    console.log(err);
-                    done(err, null);
+            try {
+                // const user = await DiscordUser.findOne({ discordId: profile.id });
+                if (user) {
+                    console.log("User exists.");
+                    // await user.updateOne({
+                    //     username: `${profile.username}#${profile.discriminator}`,
+                    //     guilds: profile.guilds
+                    // });
+                    done(null, {
+                        user_id: user.id,
+                        guilds: user.guilds,
+                        email: user.email,
+                        username,
+                        accessTokens,
+                        refreshTokens,
+                    });
+                } else {
+                    console.log("User does not exist");
+                    // const newUser = await DiscordUser.create({
+                    //     discordId: profile.id,
+                    //     username: profile.username,
+                    //     guilds: profile.guilds
+                    // });
+                    // const savedUser = await newUser.save();
+                    // done(null, savedUser);
                 }
-            })
+            } catch (err) {
+                console.log(err);
+                done(err, null);
+            }
         }
     )
 );

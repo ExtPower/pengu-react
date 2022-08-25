@@ -26,6 +26,9 @@ router.get('/user', (req, res) => {
 
 });
 router.get("/discord", passport.authenticate("discord"));
+router.get("/addBot", (req, res) => {
+    res.redirect("https://discord.com/api/oauth2/authorize?client_id=1008020130132918362&permissions=1024&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fauth%2Fredirect&response_type=code&scope=bot")
+});
 
 function isAuthorized(req, res, next) {
     if (req.user) {
