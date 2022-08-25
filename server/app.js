@@ -4,6 +4,8 @@ const session = require('express-session');
 const passport = require('passport');
 const path = require('path');
 const dotenv = require('dotenv');
+// const Discord = require("discord.js");
+// const client = new Discord.Client();
 
 dotenv.config({ path: path.join(__dirname, ".env") })
 app.use(express.json());

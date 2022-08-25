@@ -260,7 +260,7 @@ button.MuiButtonBase-root.MuiIconButton-root.MuiIconButton-colorInherit.MuiIconB
     width: 100% !important;
   }
 
-  buttton.uupdatebtn {
+  button.uupdatebtn {
     margin: 20px !important;
   }
   .asseets {
@@ -269,7 +269,7 @@ button.MuiButtonBase-root.MuiIconButton-root.MuiIconButton-colorInherit.MuiIconB
   .item.one {
     width: 25% !important;
   }
-  buttton.uupdatebtn {
+  button.uupdatebtn {
     padding: 12px 8px !important;
   }
   .innerBalancee h2 {
