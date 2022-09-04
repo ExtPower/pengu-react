@@ -11,6 +11,7 @@ dotenv.config({ path: path.join(__dirname, ".env") })
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'static')))
 require('./routes/db.js');
+require('./routes/discord.js');
 require('./strategies/discordstrategy');
 const authRoute = require('./routes/auth');
 
