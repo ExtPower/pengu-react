@@ -289,13 +289,15 @@ io.on("connection", async (socket) => {
     const openseaTasks = userData.tasksData.openseaTasks
     const twitterTasks = userData.tasksData.twitterTasks
     for (let i = 0; i < discordTasks.length; i++) {
-
+        const discordTask = discordTasks[i]
     }
     for (let i = 0; i < openseaTasks.length; i++) {
+        const openseaTask = openseaTasks[i]
 
     }
 
     for (let i = 0; i < twitterTasks.length; i++) {
+        const twitterTask = twitterTasks[i]
 
     }
 
@@ -365,6 +367,8 @@ function setInitialStoreValues() {
         return {
             id: supportedServer.id,
             name: supportedServer.name,
+            icon: supportedServer.icon,
+            nameAcronym: supportedServer.nameAcronym,
             channels: nonCategoryChannel.map(e => {
                 return {
                     id: e.id,

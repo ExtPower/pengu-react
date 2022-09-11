@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Ellipse, CurrentTask, X_icon } from "../../assets";
+import { CurrentTask, X_icon } from "../../assets";
 
-const MonitoringItem = () => {
+const MonitoringItem = ({ icon, name, isVerified, letter }) => {
   const [visible, setVisible] = useState(true);
 
   if (!visible) return <></>;
@@ -15,11 +15,17 @@ const MonitoringItem = () => {
         >
           <div className="itemCurrentsImageOverlay">
             <img src={X_icon} />
+
           </div>
-          <img src={Ellipse}></img>
+          {
+            icon != null ?
+              <img src={icon} /> :
+              <span style={{ width: '43px', background: '#d1d1d1', borderRadius: '50%', height: '43px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{letter}</span>
+          }
         </div>
-        <label>Cool Cats</label>
-        <img src={CurrentTask} style={{ marginLeft: 3 }}></img>
+        <label>{name}</label>
+        {isVerified && <img src={CurrentTask} style={{ marginLeft: 3 }} />}
+
       </div>
     </div>
   );

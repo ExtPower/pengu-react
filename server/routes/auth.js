@@ -12,9 +12,6 @@ router.get('/logout', checkAuth, (req, res) => {
     req.logout();
     res.redirect('/');
 });
-router.get('/user', checkAuth, (req, res) => {
-
-});
 
 
 

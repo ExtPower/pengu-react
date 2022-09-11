@@ -364,7 +364,7 @@ input.search.task::placeholder {
   display: flex;
 }
 
-button.btntask {
+label.btntask {
   padding: 12px 15px;
   margin: 0 0 6px 0;
   margin-right: 10px;
@@ -377,7 +377,7 @@ button.btntask {
   cursor: pointer;
 }
 
-button.btntask.activeTask {
+label.btntask.activeTask {
   background: #a0a1a9;
   color: #fff;
   border-radius: 5px;
