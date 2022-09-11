@@ -15,6 +15,7 @@ import { useSelector } from "react-redux"
 function CreateTask() {
   const [check, setCheck] = useState(false);
   const [check1, setCheck1] = useState(false);
+  const [selectedServer, setSelectedServer] = useState(null);
   const supportedServers = useSelector(state => state.supportedServers)
 
   return (
@@ -73,10 +74,11 @@ function CreateTask() {
           <div className="optionsTask server">
             <img src={Down_arrow_black} className="optionsTaskArrow" />
             <select>
+              <option value={null}>Select a server</option>
               {
                 supportedServers.map((item, index) => {
                   return (
-                    <option>{item.name}</option>
+                    <option value={item.id}>{item.name}</option>
                   )
                 })
               }
