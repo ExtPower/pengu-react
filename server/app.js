@@ -23,6 +23,34 @@ const uuid = require("uuid").v4
 dotenv.config({ path: path.join(__dirname, ".env") })
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'static')))
+// twitter strategie
+const TwitterStrategy = require("passport-twitter").Strategy;
+passport.use(new TwitterStrategy({
+    consumerKey: process.env.TWITTER_CONSUMER_KEY,
+    consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
+    callbackURL: process.env.CLIENT_REDIRECT_TWITTER,
+    passReqToCallback: true,
+},
+    function (req, token, tokenSecret, profile, done) {
+        var user = req.user
+        var twitterId = profile.id
+
+        try {
+
+            console.log("User submitted");
+            done(null, { ...user });
+        } catch (err) {
+            console.log("Twitter Token Err");
+            console.log(err);
+            done(err, null);
+        }
+    }
+));
+
+
+
+
+// end
 // discord
 const { Client, GatewayIntentBits, Partials } = require('discord.js')
 const server_id = "1008830510665039942"
@@ -124,7 +152,7 @@ passport.use(
         {
             clientID: process.env.CLIENT_ID,
             clientSecret: process.env.CLIENT_SECRET,
-            callbackURL: process.env.CLIENT_REDIRECT,
+            callbackURL: process.env.CLIENT_REDIRECT_DISCORD,
             scope: ["identify", "email", "guilds", "messages.read"],
             passReqToCallback: true,
         },
