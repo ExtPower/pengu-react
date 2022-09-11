@@ -55,7 +55,8 @@ import TextField from "@mui/material/TextField";
 import SearchIcon from "@mui/icons-material/Search";
 import InputAdornment from "@mui/material/InputAdornment";
 import { BorderAll } from "@mui/icons-material";
-
+import { io } from "socket.io-client";
+import Store from "../../store"
 const drawerWidth = 240;
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -158,6 +159,14 @@ export default function DashBoard() {
 
   useEffect(() => {
     setComponenNamee(location.pathname.split("/dashboard/")[1]);
+    const socket = io("http://localhost:3000")
+    Store.dispatch({ type: "change-data", name: "socket", value: socket })
+    socket.on("connected", (data) => {
+      socket.emit("get-supported-servers")
+      socket.on("supported-servers-changed", (data) => {
+        Store.dispatch({ name: "supportedServers", type: "change-data", value: data })
+      })
+    })
   }, []);
 
   const handleDrawerOpen = () => {
@@ -398,8 +407,8 @@ export default function DashBoard() {
                 ? "unset"
                 : location.pathname === "/dashboard/Home" ||
                   location.pathname === "/dashboard/Wallet"
-                ? "100%"
-                : "calc(100% - 64px)",
+                  ? "100%"
+                  : "calc(100% - 64px)",
           }}
         >
           <Outlet />

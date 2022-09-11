@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import {
   EyeWhite,
@@ -11,10 +11,11 @@ import {
   Down_arrow_gray,
 } from "../../assets";
 import CreateTaskButton from "./CreateTaskButton";
-
+import { useSelector } from "react-redux"
 function CreateTask() {
   const [check, setCheck] = useState(false);
   const [check1, setCheck1] = useState(false);
+  const supportedServers = useSelector(state => state.supportedServers)
 
   return (
     <div className="taskCreateMain">
@@ -72,7 +73,13 @@ function CreateTask() {
           <div className="optionsTask server">
             <img src={Down_arrow_black} className="optionsTaskArrow" />
             <select>
-              <option>Select Server</option>
+              {
+                supportedServers.map((item, index) => {
+                  return (
+                    <option>{item.name}</option>
+                  )
+                })
+              }
             </select>
           </div>
           <div className="optionsTask">
@@ -80,11 +87,19 @@ function CreateTask() {
 
             <select>
               <option>Choose channel</option>
+
               <option>#announcements</option>
               <option>#updates</option>
               <option>#general</option>
             </select>
           </div>
+          <div className="wallet innnfle eywhite task opensea">
+            <span className="walletbtn task">
+              <img src={EyeWhite}></img>
+              <label>Add Task</label>
+            </span>
+          </div>
+
         </div>
         <div className="itemtTask">
           <h5>OpenSea Monitor</h5>

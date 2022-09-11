@@ -11,9 +11,7 @@ export default function Login() {
           <img src={DiscordIcon} className="discord_icon" alt="" />
           <h3>Welcome to Penguplatform!</h3>
           <p>Login with discord</p>
-          <a href="http://localhost:3001/auth/discord" target="_blank">
-            Login
-          </a>
+          <a href="http://localhost:3000/auth/discord">Login</a>
         </form>
       </section>
     </div>

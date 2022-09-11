@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/static/css/main.80401d1b.css",
-    "main.js": "/static/js/main.edf532fb.js",
+    "main.css": "/static/css/main.81ac1a1b.css",
+    "main.js": "/static/js/main.44912aaf.js",
     "static/js/787.8b73bab9.chunk.js": "/static/js/787.8b73bab9.chunk.js",
     "static/media/bayc_image.svg": "/static/media/bayc_image.af4c02b110b861cc3320e363ec436c8a.svg",
     "static/media/feed_image_3.svg": "/static/media/feed_image_3.f166bd71aac25df7a8d67e1403f1d549.svg",
@@ -28,10 +28,12 @@
     "static/media/monkey1.svg": "/static/media/monkey1.037b52ab63c2c4c60d2b2a73b3df39e8.svg",
     "static/media/crypto_punks_square.svg": "/static/media/crypto_punks_square.6bdee3f0256d0e8dcca1ca38780d7394.svg",
     "static/media/tick.svg": "/static/media/tick.76a9f9c7c82d20ca885ebb28453f1c22.svg",
+    "static/media/discordBackground.webp": "/static/media/discordBackground.88075e76823618207ea8.webp",
     "static/media/balance1.svg": "/static/media/balance1.975fd457dce77a37608bc2765da1dff4.svg",
     "static/media/Ethereum_Logo.svg": "/static/media/Ethereum_Logo.e1fcfcc6aee30f31db8269ca2d92abcc.svg",
     "static/media/coinbase.svg": "/static/media/coinbase.a2c9d7370d95e4c939fbae9946134ca2.svg",
     "static/media/topPeenguu.svg": "/static/media/topPeenguu.cff349d27f1f5bbc2025e64873e476e4.svg",
+    "static/media/discordIcon.png": "/static/media/discordIcon.d16dab70a834fe137d18.png",
     "static/media/monkey3.svg": "/static/media/monkey3.cc8731aef3ffdc4495f530599da1a4d2.svg",
     "static/media/measremeent.svg": "/static/media/measremeent.da3820ce59f77bc9f318d30dd996d35b.svg",
     "static/media/etherscan.svg": "/static/media/etherscan.ce395a3d1eb2ab687679bc2a2e5b8066.svg",
@@ -109,12 +111,12 @@
     "static/media/homeWhite.svg": "/static/media/homeWhite.2df39db8c0ce8c4150cf369b6d5645b5.svg",
     "static/media/purple_check.svg": "/static/media/purple_check.f52aa05737669f6d7db12bee1b5e6429.svg",
     "static/media/unCheckbox.svg": "/static/media/unCheckbox.5924ff3c3a6f146382e6ade44f18c868.svg",
-    "main.80401d1b.css.map": "/static/css/main.80401d1b.css.map",
-    "main.edf532fb.js.map": "/static/js/main.edf532fb.js.map",
+    "main.81ac1a1b.css.map": "/static/css/main.81ac1a1b.css.map",
+    "main.44912aaf.js.map": "/static/js/main.44912aaf.js.map",
     "787.8b73bab9.chunk.js.map": "/static/js/787.8b73bab9.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.80401d1b.css",
-    "static/js/main.edf532fb.js"
+    "static/css/main.81ac1a1b.css",
+    "static/js/main.44912aaf.js"
   ]
 }
