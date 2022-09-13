@@ -290,14 +290,17 @@ io.on("connection", async (socket) => {
     const twitterTasks = userData.tasksData.twitterTasks
     for (let i = 0; i < discordTasks.length; i++) {
         const discordTask = discordTasks[i]
+        socket.join(`discord_${discordTask.guild_id}_${discordTask.channel_id}`)
     }
     for (let i = 0; i < openseaTasks.length; i++) {
         const openseaTask = openseaTasks[i]
+        socket.join(`opensea_${openseaTask.collection_name}`)
 
     }
 
     for (let i = 0; i < twitterTasks.length; i++) {
         const twitterTask = twitterTasks[i]
+        socket.join(`twitter_${twitterTask.handle}`)
 
     }
 
@@ -325,17 +328,19 @@ io.on("connection", async (socket) => {
                 "${_escpe(channel_id)}",
                 "${_escpe(guild_id)}"
             ) `)
+            socket.join(`discord_${guild_id}_${channel_id}`)
 
         } else if (type == "opensea") {
-            var link = data.link
+            var collection_name = data.collection_name
             var type_opensea = data.type
-            await PromisifiedQuery(`INSERT INTO tasks_opensea (task_id, link, type) 
+            await PromisifiedQuery(`INSERT INTO tasks_opensea (task_id, collection_name, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
-                "${_escpe(link)}",
+                "${_escpe(collection_name)}",
                 "${_escpe(type_opensea)}"
             ) `)
+            socket.join(`opensea_${collection_name}`)
         } else if (type == "twitter") {
             var handle = data.handle
             var retweets = data.retweets
@@ -350,6 +355,31 @@ io.on("connection", async (socket) => {
                 "${_escpe(quote_tweets)}",
                 "${_escpe(type_twitter)}"
             ) `)
+            socket.join(`twitter_${handle}`)
+        }
+        getData(userData).then((userData1) => {
+            socket.emit("userData-changed", userData1)
+            userData = userData1
+        })
+    })
+    socket.on("delete-task", async (action) => {
+        var taskId = action.taskId
+        var type = action.type || null
+        var data = action.data
+
+        await PromisifiedQuery(`DELETE FROM tasks WHERE task_id="${taskId}"`)
+        await PromisifiedQuery(`DELETE FROM tasks_${type} WHERE task_id="${taskId}"`)
+        if (type == "discord") {
+            var channel_id = data.channel_id
+            var guild_id = data.guild_id
+
+            socket.leave(`discord_${guild_id}_${channel_id}`)
+        } else if (type == "opensea") {
+            var collection_name = data.collection_name
+            socket.leave(`opensea_${collection_name}`)
+        } else if (type == "twitter") {
+            var handle = data.handle
+            socket.leave(`twitter_${handle}`)
         }
         getData(userData).then((userData1) => {
             socket.emit("userData-changed", userData1)
@@ -359,6 +389,7 @@ io.on("connection", async (socket) => {
     socket.on("get-supported-servers", action => {
         socket.emit("supported-servers-changed", Store.supportedServers)
     })
+
 });
 function setInitialStoreValues() {
     const Guilds = [...bot.guilds.cache].map(e => e[1])

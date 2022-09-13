@@ -7,8 +7,12 @@ import {
   Opensea_grey,
 } from "../../assets";
 import MonitoringItem from "./MonitoringItem";
+import { useSelector } from "react-redux";
 
 function CurrentMoniter() {
+  const twitterTasks = useSelector((state) => state.twitterTasks);
+  const discordTasks = useSelector((state) => state.discordTasks);
+  const openseaTasks = useSelector((state) => state.openseaTasks);
   return (
     <div>
       <div className="mainCurrent">
@@ -17,34 +21,33 @@ function CurrentMoniter() {
           <div className="itemCurrent">
             <img src={Twiter} className="itemCurrentSocialIcon"></img>
             <div className="itemCurrents">
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
+              {twitterTasks.map((twitterTask, index) => {
+                return (
+                  <MonitoringItem icon={twitterTask.icon} letter={twitterTask.letter} isVerified={twitterTask.isVerified} name={twitterTask.name} />
+                )
+              })}
+
             </div>
           </div>
           <div className="itemCurrent">
             <img src={Discord_gray} className="itemCurrentSocialIcon"></img>
             <div className="itemCurrents">
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
+              {discordTasks.map((discordTask, index) => {
+                return (
+                  <MonitoringItem icon={discordTask.icon} letter={discordTask.letter} isVerified={false} name={discordTask.name} />
+                )
+              })}
             </div>
           </div>
           <div className="itemCurrent">
             <img src={Opensea_grey} className="itemCurrentSocialIcon"></img>
             <div className="itemCurrents">
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
-              <MonitoringItem />
+              {openseaTasks.map((openseaTask, index) => {
+                return (
+                  <MonitoringItem icon={openseaTask.icon} letter={openseaTask.letter} isVerified={openseaTask.isVerified} name={openseaTask.name} />
+                )
+              })}
+
             </div>
           </div>
         </div>
