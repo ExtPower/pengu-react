@@ -10,9 +10,9 @@ import MonitoringItem from "./MonitoringItem";
 import { useSelector } from "react-redux";
 
 function CurrentMoniter() {
-  const twitterTasks = useSelector((state) => state.twitterTasks);
-  const discordTasks = useSelector((state) => state.discordTasks);
-  const openseaTasks = useSelector((state) => state.openseaTasks);
+  const twitterTasks = useSelector((state) => state.userData.twitterTasks);
+  const discordTasks = useSelector((state) => state.userData.discordTasks);
+  const openseaTasks = useSelector((state) => state.userData.openseaTasks);
   return (
     <div>
       <div className="mainCurrent">

@@ -2,9 +2,9 @@ import { createStore } from 'redux'
 const Store = createStore((state = {
     userData: {},
     supportedServers: [],
-    twitterTasks: [],
-    discordTasks: [],
-    openseaTasks: [],
+    newTask_twitter: {},
+    newTask_discord: {},
+    newTask_opensea: {}
 }, action) => {
     if (action.type == "change-data") {
         return { ...state, [action.name]: action.value }

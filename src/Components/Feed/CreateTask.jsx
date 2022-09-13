@@ -10,7 +10,6 @@ import {
   Down_arrow_black,
   Down_arrow_gray,
 } from "../../assets";
-import CreateTaskButton from "./CreateTaskButton";
 import { useSelector } from "react-redux";
 function CreateTask() {
   const supportedServers = useSelector((state) => state.supportedServers);
@@ -19,6 +18,7 @@ function CreateTask() {
   const [includeRetweets, setIncludeRetweets] = useState(false);
   const [includeQuoteTweets, setIncludeQuoteTweets] = useState(false);
   const [typeOfTaskTwitter, setTypeOfTaskTwitter] = useState("tweets");
+  const [taskName, setTaskName] = useState("");
   function twitterMonitorType(event) {
     setTypeOfTaskTwitter(event.target.getAttribute("data-value"));
   }
@@ -58,6 +58,8 @@ function CreateTask() {
         type="text"
         className="search task"
         placeholder="Task Name"
+        value={taskName}
+        onInput={(event) => setTaskName(event.target.value)}
       ></input>
       <div className="taskflex">
         <div className="itemtTask">

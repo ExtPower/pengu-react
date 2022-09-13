@@ -281,7 +281,7 @@ io.on("connection", async (socket) => {
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
     var user = { user_id, email, username, discord_id, discord_avatar }
     var userData = await getData(user)
-    if (Store.verifiedUsers.filter(e => e == userData.username).length == 0) {
+    if (Store.verifiedUsers.filter(e => e == userData.discord_id).length == 0) {
         socket.disconnect()
     }
     socket.emit("connected")
@@ -372,7 +372,6 @@ io.on("connection", async (socket) => {
         if (type == "discord") {
             var channel_id = data.channel_id
             var guild_id = data.guild_id
-
             socket.leave(`discord_${guild_id}_${channel_id}`)
         } else if (type == "opensea") {
             var collection_name = data.collection_name
@@ -388,6 +387,12 @@ io.on("connection", async (socket) => {
     })
     socket.on("get-supported-servers", action => {
         socket.emit("supported-servers-changed", Store.supportedServers)
+    })
+    socket.on("get-data", action => {
+        getData(userData).then((userData1) => {
+            socket.emit("userData-changed", userData1)
+            userData = userData1
+        })
     })
 
 });
@@ -408,7 +413,7 @@ function setInitialStoreValues() {
             })
         }
     })
-    Store.verifiedUsers = bot.guilds.cache.get(server_id)?.roles?.cache?.get(verified_role_id)?.members?.map(m => m.user.tag) || [];
+    Store.verifiedUsers = bot.guilds.cache.get(server_id)?.roles?.cache?.get(verified_role_id)?.members?.map(m => m.user.id) || [];
 
 }
 
