@@ -5,13 +5,8 @@ const { instrument } = require("@socket.io/admin-ui");
 const Store = require('./modules/Store.js');
 const { PromisifiedQuery, _escpe, getData, checkAuth } = require('./modules/functions.js');
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        origin: ["http://localhost:3000", "https://admin.socket.io"]
-    }
-});
-var supportedServers = []
+
+
 const session = require('express-session');
 const passport = require('passport');
 const path = require('path');
@@ -23,6 +18,7 @@ const uuid = require("uuid").v4
 dotenv.config({ path: path.join(__dirname, ".env") })
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'static')))
+
 // twitter strategie
 const TwitterStrategy = require("passport-twitter").Strategy;
 passport.use(new TwitterStrategy({
@@ -101,13 +97,13 @@ bot.on('messageCreate', async (message) => {
     var msgCreatedTimestamp = message.createdTimestamp
     var promises = []
     promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_found (
-        msg_discord_id,
+        discord_msg_id,
         msg_id,
         msg_channel_id,
         msg_guild_id,
-        user_id,
-        user_avatar,
-        user_tag,
+        discord_user_id,
+        discord_user_avatar,
+        discord_user_tag,
         msg_content,
         msg_url,
         created_time_stamp
@@ -138,7 +134,25 @@ bot.on('messageCreate', async (message) => {
         )`))
     }
     Promise.all(promises).then((data) => {
-
+        io.to(`discord_${guildId}_${channelId}`).emit("data_monitored", {
+            discord_msg_id: msgDiscordId,
+            msg_id: msgId,
+            msg_channel_id: channelId,
+            msg_guild_id: guildId,
+            discord_user_id: authorId,
+            discord_user_avatar: authorAvatar,
+            discord_user_tag: authorName,
+            msg_content: msgContent,
+            msg_url: msgUrl,
+            created_time_stamp: msgCreatedTimestamp,
+            attachments: msgAttachements.map(item => {
+                return {
+                    attachement_url: item.url,
+                    width: item.width,
+                    height: item.height
+                }
+            })
+        })
     })
 });
 
@@ -157,7 +171,6 @@ passport.use(
             passReqToCallback: true,
         },
         async (req, accessToken, refreshToken, profile, done) => {
-            console.log(profile);
             var username = `${profile.username}#${profile.discriminator}`;
             var discordId = profile.id
             var authorAvatar = `https://cdn.discordapp.com/avatars/${discordId}/${profile.avatar}.png`
@@ -221,12 +234,10 @@ passport.use(
 
 passport.serializeUser((user, done) => {
     var { user_id } = user;
-    console.log("Serialize");
     done(null, user_id);
 });
 
 passport.deserializeUser(async (userId, done) => {
-    console.log("Deserializing");
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
     var user = { user_id, email, username, discord_id, discord_avatar }
     if (user.user_id != null) done(null, user);
@@ -235,6 +246,7 @@ passport.deserializeUser(async (userId, done) => {
 
 // end
 const authRoute = require('./routes/auth');
+const { supportedServers } = require('./modules/Store.js');
 var sessionMiddleware = session({
     secret: process.env.SECRET_SESSION_KEY,
     cookie: {
@@ -246,7 +258,6 @@ var sessionMiddleware = session({
 app.use(sessionMiddleware);
 const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
 
-io.use(wrap(sessionMiddleware));
 app.use(express.static(path.join(__dirname, 'static')));
 
 app.use(passport.initialize());
@@ -254,6 +265,25 @@ app.use(passport.session());
 
 
 
+
+app.use('/auth', authRoute);
+app.get("/login", function (req, res) {
+    res.redirect("/")
+})
+app.get(["/", "/dashboard*"], checkAuth, async function (req, res) {
+    res.sendFile(path.join(__dirname, 'static/index.html'));
+})
+
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: ["https://admin.socket.io/"],
+        credentials: true
+
+    }
+});
+io.use(wrap(sessionMiddleware));
 // only allow authenticated users
 io.use((socket, next) => {
     const session = socket.request.session;
@@ -265,17 +295,6 @@ io.use((socket, next) => {
     }
 });
 
-app.use('/auth', authRoute);
-app.get("/login", function (req, res) {
-    res.redirect("/")
-})
-app.get(["/", "/dashboard*"], checkAuth, async function (req, res) {
-    console.log(await getData(req.user));
-    res.sendFile(path.join(__dirname, 'static/index.html'));
-})
-
-
-
 io.on("connection", async (socket) => {
     const userId = socket.request.session.passport.user || null
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
@@ -285,22 +304,29 @@ io.on("connection", async (socket) => {
         socket.disconnect()
     }
     socket.emit("connected")
-    const discordTasks = userData.tasksData.discordTasks
-    const openseaTasks = userData.tasksData.openseaTasks
-    const twitterTasks = userData.tasksData.twitterTasks
-    for (let i = 0; i < discordTasks.length; i++) {
-        const discordTask = discordTasks[i]
+    var { tasks } = userData
+    var monitoredItemsTwitter = []
+    var monitoredItemsDiscord = []
+    var monitoredItemsOpensea = []
+
+    tasks.forEach(task => {
+        var monitoredItems = task.monitoredItems
+        monitoredItemsTwitter.push(...monitoredItems.twitter)
+        monitoredItemsDiscord.push(...monitoredItems.discord)
+        monitoredItemsOpensea.push(...monitoredItems.opensea)
+    });
+    for (let i = 0; i < monitoredItemsTwitter.length; i++) {
+        const twitterTask = monitoredItemsTwitter[i]
+        socket.join(`twitter_${twitterTask.handle}`)
+
+    }
+    for (let i = 0; i < monitoredItemsDiscord.length; i++) {
+        const discordTask = monitoredItemsDiscord[i]
         socket.join(`discord_${discordTask.guild_id}_${discordTask.channel_id}`)
     }
-    for (let i = 0; i < openseaTasks.length; i++) {
-        const openseaTask = openseaTasks[i]
+    for (let i = 0; i < monitoredItemsOpensea.length; i++) {
+        const openseaTask = monitoredItemsOpensea[i]
         socket.join(`opensea_${openseaTask.collection_name}`)
-
-    }
-
-    for (let i = 0; i < twitterTasks.length; i++) {
-        const twitterTask = twitterTasks[i]
-        socket.join(`twitter_${twitterTask.handle}`)
 
     }
 
@@ -308,57 +334,74 @@ io.on("connection", async (socket) => {
         var taskId = uuid()
         var type = action.type || null
         var data = action.data
-        var taskName = data.name
-
-        await PromisifiedQuery(`INSERT INTO tasks (user_id, task_id, name, type) 
+        var taskName = action.name
+        var twitterTasks = data.twitter || []
+        var discordTasks = data.discord || []
+        var openseaTasks = data.opensea || []
+        var promises = []
+        promises.push(await PromisifiedQuery(`INSERT INTO tasks (user_id, task_id, name, type) 
         VALUES 
         (
             "${_escpe(userId)}",
             "${_escpe(taskId)}",
             "${_escpe(taskName)}",
             "${_escpe(type)}"
-        )`)
-        if (type == "discord") {
-            var channel_id = data.channel_id
-            var guild_id = data.guild_id
-            await PromisifiedQuery(`INSERT INTO tasks_discord (task_id, channel_id, guild_id) 
-            VALUES 
-            (
-                "${_escpe(taskId)}",
-                "${_escpe(channel_id)}",
-                "${_escpe(guild_id)}"
-            ) `)
-            socket.join(`discord_${guild_id}_${channel_id}`)
+        )`))
 
-        } else if (type == "opensea") {
-            var collection_name = data.collection_name
-            var type_opensea = data.type
-            await PromisifiedQuery(`INSERT INTO tasks_opensea (task_id, collection_name, type) 
+        for (let i = 0; i < twitterTasks.length; i++) {
+            var twitterTask = twitterTasks[i];
+            var { handle, retweets, quote_tweets, type_twitter } = twitterTask
+            var monitoredId = uuid()
+            promises.push(PromisifiedQuery(`INSERT INTO tasks_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
-                "${_escpe(collection_name)}",
-                "${_escpe(type_opensea)}"
-            ) `)
-            socket.join(`opensea_${collection_name}`)
-        } else if (type == "twitter") {
-            var handle = data.handle
-            var retweets = data.retweets
-            var quote_tweets = data.quote_tweets
-            var type_twitter = data.type
-            await PromisifiedQuery(`INSERT INTO tasks_twitter (task_id, handle, retweets, quote_tweets, type) 
-            VALUES 
-            (
-                "${_escpe(taskId)}",
+                "${_escpe(monitoredId)}",
                 "${_escpe(handle)}",
                 "${_escpe(retweets)}",
                 "${_escpe(quote_tweets)}",
                 "${_escpe(type_twitter)}"
-            ) `)
+            ) `))
             socket.join(`twitter_${handle}`)
+
         }
+        for (let i = 0; i < discordTasks.length; i++) {
+            var discordTask = discordTasks[i];
+            var { channel_id, guild_id } = discordTask
+            var server_details = supportedServers.filter(e => e.guild_id == guild_id)[0] || {}
+            var monitoredId = uuid()
+            promises.push(PromisifiedQuery(`INSERT INTO tasks_discord (task_id, monitored_id, channel_id, guild_id, icon, nameAcronym) 
+            VALUES 
+            (
+                "${_escpe(taskId)}",
+                "${_escpe(monitoredId)}",
+                "${_escpe(channel_id)}",
+                "${_escpe(guild_id)}",
+                "${_escpe(server_details.icon)}",
+                "${_escpe(server_details.nameAcronym)}"
+            ) `))
+            socket.join(`discord_${guild_id}_${channel_id}`)
+
+        }
+        for (let i = 0; i < openseaTasks.length; i++) {
+            var openseaTask = openseaTasks[i];
+            var { collection_name, type_opensea } = openseaTask
+            var monitoredId = uuid()
+            promises.push(PromisifiedQuery(`INSERT INTO tasks_opensea (task_id, monitored_id, collection_name, type) 
+            VALUES 
+            (
+                "${_escpe(taskId)}",
+                "${_escpe(monitoredId)}",
+                "${_escpe(collection_name)}",
+                "${_escpe(type_opensea)}"
+            ) `))
+            socket.join(`opensea_${collection_name}`)
+
+        }
+        await Promise.all(promises)
         getData(userData).then((userData1) => {
             socket.emit("userData-changed", userData1)
+            socket.emit("task-created", taskId)
             userData = userData1
         })
     })
@@ -367,23 +410,110 @@ io.on("connection", async (socket) => {
         var type = action.type || null
         var data = action.data
 
-        await PromisifiedQuery(`DELETE FROM tasks WHERE task_id="${taskId}"`)
-        await PromisifiedQuery(`DELETE FROM tasks_${type} WHERE task_id="${taskId}"`)
+        await PromisifiedQuery(`DELETE FROM tasks WHERE task_id="${_escpe(taskId)}"`)
+        var monitoredTwitterItems = await PromisifiedQuery(`SELECT * FROM tasks_twitter WHERE task_id="${_escpe(taskId)}"`)
+        await PromisifiedQuery(`DELETE FROM tasks_twitter WHERE task_id="${_escpe(taskId)}"`)
+        var monitoredDiscordItems = await PromisifiedQuery(`SELECT * FROM tasks_discord WHERE task_id="${_escpe(taskId)}"`)
+        await PromisifiedQuery(`DELETE FROM tasks_discord WHERE task_id="${_escpe(taskId)}"`)
+        var monitoredOpenseaItems = await PromisifiedQuery(`SELECT * FROM tasks_opensea WHERE task_id="${_escpe(taskId)}"`)
+        await PromisifiedQuery(`DELETE FROM tasks_opensea WHERE task_id="${_escpe(taskId)}"`)
+
+
+
+        for (let i = 0; i < monitoredDiscordItems.length; i++) {
+            const monitoredDiscordItem = monitoredDiscordItems[i];
+            var { channel_id, guild_id } = monitoredDiscordItem
+            socket.leave(`discord_${guild_id}_${channel_id}`)
+        }
+        for (let i = 0; i < monitoredTwitterItems.length; i++) {
+            const monitoredTwitterItem = monitoredTwitterItems[i];
+            var handle = monitoredTwitterItem.handle
+            socket.leave(`twitter_${handle}`)
+
+        }
+        for (let i = 0; i < monitoredOpenseaItems.length; i++) {
+            const monitoredOpenseaItem = monitoredOpenseaItems[i];
+            var collection_name = monitoredOpenseaItem.collection_name
+            socket.leave(`opensea_${collection_name}`)
+        }
+        getData(userData).then((userData1) => {
+            socket.emit("userData-changed", userData1)
+            userData = userData1
+        })
+    })
+    socket.on("add-monitored-item", async (action) => {
+        var monitoredId = uuid()
+        var taskId = action.task_id
+        var type = action.type
+        var data = action.data
+        if (type == "twitter") {
+            var { handle, retweets, quote_tweets, type_twitter } = data
+            await PromisifiedQuery(`INSERT INTO tasks_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
+            VALUES 
+            (
+                "${_escpe(taskId)}",
+                "${_escpe(monitoredId)}",
+                "${_escpe(handle)}",
+                "${_escpe(retweets)}",
+                "${_escpe(quote_tweets)}",
+                "${_escpe(type_twitter)}"
+            ) `)
+            socket.join(`twitter_${handle}`)
+        } else if (type == "discord") {
+            var { guild_id, channel_id } = data
+
+            var server_details = supportedServers.filter(e => e.guild_id == data.guild_id)[0] || {}
+            await PromisifiedQuery(`INSERT INTO tasks_discord (task_id, monitored_id, channel_id, guild_id, icon, nameAcronym) 
+            VALUES 
+            (
+                "${_escpe(taskId)}",
+                "${_escpe(monitoredId)}",
+                "${_escpe(channel_id)}",
+                "${_escpe(guild_id)}",
+                "${_escpe(server_details.icon)}",
+                "${_escpe(server_details.nameAcronym)}"
+            ) `)
+            socket.join(`discord_${guild_id}_${channel_id}`)
+        } else if (type == "opensea") {
+            var { collection_name, type_opensea } = data
+            await PromisifiedQuery(`INSERT INTO tasks_opensea (task_id, monitored_id, collection_name, type) 
+            VALUES 
+            (
+                "${_escpe(taskId)}",
+                "${_escpe(monitoredId)}",
+                "${_escpe(collection_name)}",
+                "${_escpe(type_opensea)}"
+            ) `)
+            socket.join(`opensea_${collection_name}`)
+        }
+        getData(userData).then((userData1) => {
+            socket.emit("userData-changed", userData1)
+            userData = userData1
+        })
+
+    })
+
+    socket.on("delete-monitored-item", async (action) => {
+        var monitoredId = action.monitoredId
+        var type = action.type || null
+        var data = action.data
+
+        await PromisifiedQuery(`DELETE FROM tasks_${_escpe(type)} WHERE monitored_id="${_escpe(monitoredId)}"`)
         if (type == "discord") {
-            var channel_id = data.channel_id
-            var guild_id = data.guild_id
+            var { guild_id, channel_id } = data
             socket.leave(`discord_${guild_id}_${channel_id}`)
         } else if (type == "opensea") {
-            var collection_name = data.collection_name
+            var { collection_name } = data
             socket.leave(`opensea_${collection_name}`)
         } else if (type == "twitter") {
-            var handle = data.handle
+            var { handle } = data
             socket.leave(`twitter_${handle}`)
         }
         getData(userData).then((userData1) => {
             socket.emit("userData-changed", userData1)
             userData = userData1
         })
+
     })
     socket.on("get-supported-servers", action => {
         socket.emit("supported-servers-changed", Store.supportedServers)
@@ -416,6 +546,7 @@ function setInitialStoreValues() {
     Store.verifiedUsers = bot.guilds.cache.get(server_id)?.roles?.cache?.get(verified_role_id)?.members?.map(m => m.user.id) || [];
 
 }
-
-instrument(io, { auth: false })
+instrument(io, {
+    auth: false
+});
 httpServer.listen(3000);

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Ellipse,
   Twiter,
@@ -10,9 +10,18 @@ import MonitoringItem from "./MonitoringItem";
 import { useSelector } from "react-redux";
 
 function CurrentMoniter() {
-  const twitterTasks = useSelector((state) => state.userData.twitterTasks);
-  const discordTasks = useSelector((state) => state.userData.discordTasks);
-  const openseaTasks = useSelector((state) => state.userData.openseaTasks);
+  var userData = useSelector((state) => state.userData);
+  var [twitterTasks, setTwitterTasks] = useState([])
+  var [discordTasks, setDiscordTasks] = useState([])
+  var [openseaTasks, setOpenseaTasks] = useState([])
+  useEffect(() => {
+    if (userData.user_id != null) {
+      var tasksData = userData?.tasksData || {}
+      setTwitterTasks(tasksData.twitterTasks || [])
+      setDiscordTasks(tasksData.discordTasks || [])
+      setOpenseaTasks(tasksData.openseaTasks || [])
+    }
+  }, [userData, setTwitterTasks, setDiscordTasks, setOpenseaTasks])
   return (
     <div>
       <div className="mainCurrent">
@@ -21,7 +30,7 @@ function CurrentMoniter() {
           <div className="itemCurrent">
             <img src={Twiter} className="itemCurrentSocialIcon"></img>
             <div className="itemCurrents">
-              {twitterTasks.map((twitterTask, index) => {
+              {twitterTasks && twitterTasks.map((twitterTask, index) => {
                 return (
                   <MonitoringItem icon={twitterTask.icon} letter={twitterTask.letter} isVerified={twitterTask.isVerified} name={twitterTask.name} />
                 )
@@ -32,9 +41,9 @@ function CurrentMoniter() {
           <div className="itemCurrent">
             <img src={Discord_gray} className="itemCurrentSocialIcon"></img>
             <div className="itemCurrents">
-              {discordTasks.map((discordTask, index) => {
+              {discordTasks && discordTasks.map((discordTask, index) => {
                 return (
-                  <MonitoringItem icon={discordTask.icon} letter={discordTask.letter} isVerified={false} name={discordTask.name} />
+                  <MonitoringItem icon={discordTask.icon} letter={discordTask.nameAcronym} isVerified={false} name={discordTask.name} />
                 )
               })}
             </div>
@@ -42,7 +51,7 @@ function CurrentMoniter() {
           <div className="itemCurrent">
             <img src={Opensea_grey} className="itemCurrentSocialIcon"></img>
             <div className="itemCurrents">
-              {openseaTasks.map((openseaTask, index) => {
+              {openseaTasks && openseaTasks.map((openseaTask, index) => {
                 return (
                   <MonitoringItem icon={openseaTask.icon} letter={openseaTask.letter} isVerified={openseaTask.isVerified} name={openseaTask.name} />
                 )

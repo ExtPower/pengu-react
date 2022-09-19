@@ -13,7 +13,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" exact element={<Login />} />
 
         <Route path="/dashboard" element={<DashBoard />}>
           <Route path="" element={<Navigate to="/dashboard/home" />} />
@@ -22,6 +22,7 @@ function App() {
           <Route path="wallet" element={<Wallet />} />
           <Route path="openSea" element={<OpenSeaSearch />} />
           <Route path="createTask" element={<MonitoringTask />} />
+          <Route path="editTask/:task_id" element={<MonitoringTask />} />
           <Route path="Settings" element={<Settings />} />
           {/* createTask */}
         </Route>

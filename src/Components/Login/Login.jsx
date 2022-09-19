@@ -4,7 +4,7 @@ import DiscordBackground from "../../assets/discordBackground.webp";
 import "./login.css";
 export default function Login() {
   return (
-    <div>
+    <div className="loginSection">
       <section>
         <img src={DiscordBackground}></img>
         <form>

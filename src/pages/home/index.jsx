@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -56,10 +56,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import InputAdornment from "@mui/material/InputAdornment";
 import { BorderAll } from "@mui/icons-material";
 import { io } from "socket.io-client";
-import Store from "../../store"
+import Store from "../../store";
+import { useSelector } from "react-redux";
 const drawerWidth = 240;
 
-const openedMixin = (theme: Theme): CSSObject => ({
+const openedMixin = (theme) => ({
   width: drawerWidth,
   transition: theme.transitions.create("width", {
     easing: theme.transitions.easing.sharp,
@@ -68,7 +69,7 @@ const openedMixin = (theme: Theme): CSSObject => ({
   overflowX: "hidden",
 });
 
-const closedMixin = (theme: Theme): CSSObject => ({
+const closedMixin = (theme) => ({
   transition: theme.transitions.create("width", {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -89,13 +90,9 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   ...theme.mixins.toolbar,
 }));
 
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-}
-
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
-})<AppBarProps>(({ theme, open }) => ({
+})(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
   transition: theme.transitions.create(["width", "margin"], {
     easing: theme.transitions.easing.sharp,
@@ -149,24 +146,40 @@ const list = [
     after: SearchWhite,
   },
 ];
-
 export default function DashBoard() {
   const location = useLocation();
 
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [ComponenNamee, setComponenNamee] = React.useState("Home");
-
+  const userData = useSelector((state) => state.userData);
+  const navigate = useNavigate();
   useEffect(() => {
     setComponenNamee(location.pathname.split("/dashboard/")[1]);
-    const socket = io("http://localhost:3000")
-    Store.dispatch({ type: "change-data", name: "socket", value: socket })
+    const socket = io("http://localhost:3000");
+    Store.dispatch({ type: "change-data", name: "socket", value: socket });
     socket.on("connected", (data) => {
-      socket.emit("get-supported-servers")
       socket.on("supported-servers-changed", (data) => {
-        Store.dispatch({ name: "supportedServers", type: "change-data", value: data })
-      })
-    })
+        Store.dispatch({
+          name: "supportedServers",
+          type: "change-data",
+          value: data,
+        });
+      });
+      socket.on("data_monitored", (action) => {
+        socket.emit("get-data");
+      });
+
+      socket.on("userData-changed", (data) => {
+        Store.dispatch({ name: "userData", type: "change-data", value: data });
+      });
+      socket.on("task-created", (action) => {
+        navigate(`/dashboard/editTask/${action}`);
+      });
+
+      socket.emit("get-supported-servers");
+      socket.emit("get-data");
+    });
   }, []);
 
   const handleDrawerOpen = () => {
@@ -372,7 +385,10 @@ export default function DashBoard() {
               >
                 <span className="proffillee">
                   {" "}
-                  <img src={Profile2}></img>
+                  <img
+                    src={userData.discord_avatar}
+                    style={{ borderRadius: "50%" }}
+                  ></img>
                 </span>
                 <span className="proffileeOb">
                   <img className="opss" src={GameProfile}></img>
@@ -407,8 +423,8 @@ export default function DashBoard() {
                 ? "unset"
                 : location.pathname === "/dashboard/Home" ||
                   location.pathname === "/dashboard/Wallet"
-                  ? "100%"
-                  : "calc(100% - 64px)",
+                ? "100%"
+                : "calc(100% - 64px)",
           }}
         >
           <Outlet />

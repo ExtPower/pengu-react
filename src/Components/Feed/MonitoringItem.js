@@ -2,25 +2,25 @@ import React, { useState } from "react";
 import { CurrentTask, X_icon } from "../../assets";
 
 const MonitoringItem = ({ icon, name, isVerified, letter }) => {
-  const [visible, setVisible] = useState(true);
+  function removeTask() {
 
-  if (!visible) return <></>;
+  }
 
   return (
     <div className="flexitem">
       <div className="itemCurrentsInfoContainer">
         <div
           className="itemCurrentsImageContainer"
-          onClick={() => setVisible(false)}
+          onClick={removeTask}
         >
           <div className="itemCurrentsImageOverlay">
             <img src={X_icon} />
 
           </div>
           {
-            icon != null ?
+            icon != "" ?
               <img src={icon} /> :
-              <span style={{ width: '43px', background: '#d1d1d1', borderRadius: '50%', height: '43px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{letter}</span>
+              <span style={{ width: '43px', background: '#6362F0', color: "white", borderRadius: '50%', height: '43px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{letter}</span>
           }
         </div>
         <label>{name}</label>

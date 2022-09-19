@@ -6,46 +6,26 @@ function getData(user1) {
         var userId = user.user_id
         delete user.id
         var tasks = await PromisifiedQuery(`SELECT * FROM tasks WHERE user_id="${_escpe(userId)}"`)
-        var promises = []
-        for (let i = 0; i < tasks.length; i++) {
-            const task = tasks[i]
-            const taskId = task.id;
-            const taskType = task.type;
-            promises.push(PromisifiedQuery(`SELECT * FROM tasks_${_escpe(taskType)} WHERE task_id="${_escpe(taskId)}"`))
-        }
-        var tasksDetails = await Promise.all(promises).then((results) => {
-            var finalRes = []
-            results.forEach((promiseRes) => {
-                promiseRes.forEach((detail) => {
-                    finalRes.push(detail)
-                })
-            })
-            return finalRes
-        })
-        var finalData = []
-        for (let i = 0; i < tasks.length; i++) {
-            var task = tasks[i];
-            var taskDetails = tasksDetails.filter(e => e.task_id == task.task_id)?.[0] || { task_id: null }
-            if (taskDetails.task_id == null) {
-                task = { ...taskDetails, ...task }
-            }
-            finalData.push(task)
-        }
-
-        var discordTasks = finalData.filter(e => e.type == "discord")
+        var monitoredItemsTwitter = await PromisifiedQuery(`SELECT * FROM monitored_items_twitter WHERE 1`)
+        var monitoredItemsDiscord = await PromisifiedQuery(`SELECT * FROM monitored_items_discord WHERE 1`)
+        var monitoredItemsOpensea = await PromisifiedQuery(`SELECT * FROM monitored_items_opensea WHERE 1`)
         var discord_msgs = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE 1`)
         var discord_msgs_attachements = await PromisifiedQuery(`SELECT * FROM discord_msgs_attachements WHERE 1`)
         for (let i = 0; i < discord_msgs.length; i++) {
             var discord_msg = discord_msgs[i];
             discord_msg.attachements = discord_msgs_attachements.filter(e => e.msg_id == discord_msg.msg_id)
         }
-        for (let i = 0; i < discordTasks.length; i++) {
-            const discordTask = discordTasks[i];
-            discordTask.results = discord_msgs.filter(e => e.channel_id == discordTask.channel_id && e.guild_id == discordTask.guild_id)
+
+        for (let i = 0; i < tasks.length; i++) {
+            var task = tasks[i];
+            task.monitoredItems = {
+                twitter: monitoredItemsTwitter.filter(e => e.task_id == task.task_id),
+                discord: monitoredItemsDiscord.filter(e => e.task_id == task.task_id),
+                opensea: monitoredItemsOpensea.filter(e => e.task_id == task.task_id)
+            }
+            task.results = []
         }
-        var twitterTasks = finalData.filter(e => e.type == "twitter")
-        var openseaTasks = finalData.filter(e => e.type == "opensea")
-        resolve({ ...user, tasksData: { discordTasks, twitterTasks, openseaTasks } })
+        resolve({ ...user, tasks })
     })
 
 }
