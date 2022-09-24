@@ -155,7 +155,22 @@ export default function DashBoard() {
   const userData = useSelector((state) => state.userData);
   const navigate = useNavigate();
   useEffect(() => {
-    setComponenNamee(location.pathname.split("/dashboard/")[1]);
+    var pageName = location.pathname.split("/dashboard/")[1];
+    if (pageName && pageName.indexOf("/") != -1) {
+      if (userData.user_id != null) {
+        if (pageName.indexOf("editTask") != -1) {
+          var taskId = pageName.split("/")[1];
+          pageName =
+            userData.tasks?.filter((e) => e.task_id == taskId)?.[0]?.name ||
+            null;
+        }
+      } else {
+        pageName = "";
+      }
+    }
+    setComponenNamee(pageName);
+  }, [userData, location]);
+  useEffect(() => {
     const socket = io("http://localhost:3000");
     Store.dispatch({ type: "change-data", name: "socket", value: socket });
     socket.on("connected", (data) => {
@@ -166,12 +181,16 @@ export default function DashBoard() {
           value: data,
         });
       });
-      socket.on("data_monitored", (action) => {
-        socket.emit("get-data");
+      socket.on("data-monitored", (action) => {
+        socket.emit("req-data-monitored");
       });
 
-      socket.on("userData-changed", (data) => {
-        Store.dispatch({ name: "userData", type: "change-data", value: data });
+      socket.on("userData-changed", (action) => {
+        Store.dispatch({
+          name: "userData",
+          type: "change-data",
+          value: action.data,
+        });
       });
       socket.on("task-created", (action) => {
         navigate(`/dashboard/editTask/${action}`);

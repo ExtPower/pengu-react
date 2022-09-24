@@ -15,34 +15,34 @@ import {
 } from "../../../src/assets/index";
 function FeedTopbar() {
   const location = useLocation();
-
+  var isTaskDetailPage = location.pathname !== "/dashboard/createTask" && location.pathname.indexOf("/dashboard/editTask") == -1
   return (
     <div>
       <div className="topbarFeed">
         <div className="topbtns">
           <Link
             to={
-              location.pathname !== "/dashboard/createTask"
+              isTaskDetailPage
                 ? "/dashboard/createTask"
                 : "/dashboard/Feed"
             }
           >
             <div className="wallet innnfle eywhite">
               <span className="walletbtn">
-                {location.pathname !== "/dashboard/createTask" ? (
+                {isTaskDetailPage ? (
                   <img src={EyeWhite} />
                 ) : (
                   <img src={Back_button_icon} />
                 )}
                 <label>
-                  {location.pathname !== "/dashboard/createTask"
+                  {isTaskDetailPage
                     ? "Create Task"
                     : "Go Back"}
                 </label>
               </span>
             </div>{" "}
           </Link>
-          {location.pathname !== "/dashboard/createTask" && (
+          {isTaskDetailPage && (
             <div className="wallet innnfle clearall">
               <span className="walletbtn">
                 <img src={ClearAll}></img>

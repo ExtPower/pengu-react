@@ -23,7 +23,14 @@ function getData(user1) {
                 discord: monitoredItemsDiscord.filter(e => e.task_id == task.task_id),
                 opensea: monitoredItemsOpensea.filter(e => e.task_id == task.task_id)
             }
-            task.results = []
+            task.results = [
+                ...discord_msgs.filter(discordmsg => task.monitoredItems.discord.filter(monitoredItem => discordmsg.msg_channel_id == monitoredItem.channel_id && discordmsg.msg_guild_id == monitoredItem.guild_id && monitoredItem.created_time_stamp < discordmsg.created_time_stamp).length > 0).map((item) => {
+                    return {
+                        ...item,
+                        type: "discord"
+                    }
+                })
+            ].sort((a, b) => b.created_time_stamp - a.created_time_stamp)
         }
         resolve({ ...user, tasks })
     })

@@ -65,93 +65,141 @@ const bot = new Client({
 })
 
 console.log('bot.login');
+function changeSupportedServers() {
+    setInitialStoreValues()
+    io.emit(`supported-servers-changed`, Store.supportedServers)
+
+}
 bot.login(process.env.BOT_TOKEN);
 bot.on('ready', async () => {
     console.log("bot");
-    setInitialStoreValues()
+    changeSupportedServers()
 });
 bot.on('guildCreate', async (guild) => {
-    setInitialStoreValues()
-    io.emit(`guilds-change`)
-
+    changeSupportedServers()
 });
 bot.on('guildDelete', async (guild) => {
-    setInitialStoreValues()
-    var guildId = guild.id
-    io.emit(`guilds-change`)
-    io.emit(`${guildId}-*`)
+    changeSupportedServers()
+});
+bot.on('guildUpdate', async (guildOld, guildNew) => {
+    changeSupportedServers()
 });
 
+function createMessage(message) {
+    return new Promise((resolve, reject) => {
+
+        var author = message.author
+        var msgDiscordId = message.id
+        var msgId = uuid()
+        var channelId = message.channelId
+        var guildId = message.guildId
+        var authorId = author.id
+        var authorAvatar = `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png`
+        var authorName = author.tag
+        var msgContent = message.content
+        var msgUrl = message.url
+        var msgAttachements = [...message.attachments].map(e => e[1])
+        var msgCreatedTimestamp = message.createdTimestamp
+        var promises = []
+        promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_found (
+            discord_msg_id,
+            msg_id,
+            msg_channel_id,
+            msg_guild_id,
+            discord_user_id,
+            discord_user_avatar,
+            discord_user_tag,
+            msg_content,
+            msg_url
+        ) VALUES (
+            "${_escpe(msgDiscordId)}",
+            "${_escpe(msgId)}",
+            "${_escpe(channelId)}",
+            "${_escpe(guildId)}",
+            "${_escpe(authorId)}",
+            "${_escpe(authorAvatar)}",
+            "${_escpe(authorName)}",
+            "${_escpe(msgContent)}",
+            "${_escpe(msgUrl)}"
+        )`))
+        for (let i = 0; i < msgAttachements.length; i++) {
+            const msgAttachement = msgAttachements[i];
+            promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_attachements (
+                msg_id,
+                attachement_url,
+                width,
+                height
+            ) VALUES (
+                "${_escpe(msgId)}",
+                "${_escpe(msgAttachement.url)}",
+                "${_escpe(msgAttachement.width)}",
+                "${_escpe(msgAttachement.height)}"
+            )`))
+        }
+        Promise.all(promises).then((data) => {
+            var dataToSend = {
+                discord_msg_id: msgDiscordId,
+                msg_id: msgId,
+                msg_channel_id: channelId,
+                msg_guild_id: guildId,
+                discord_user_id: authorId,
+                discord_user_avatar: authorAvatar,
+                discord_user_tag: authorName,
+                msg_content: msgContent,
+                msg_url: msgUrl,
+                created_time_stamp: msgCreatedTimestamp,
+                attachments: msgAttachements.map(item => {
+                    return {
+                        attachement_url: item.url,
+                        width: item.width,
+                        height: item.height
+                    }
+                })
+            }
+            resolve(dataToSend)
+        })
+    })
+}
+
 bot.on('messageCreate', async (message) => {
-    var author = message.author
-    var msgDiscordId = message.id
-    var msgId = uuid()
     var channelId = message.channelId
     var guildId = message.guildId
-    var authorId = author.id
-    var authorAvatar = `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png`
-    var authorName = author.tag
-    var msgContent = message.content
-    var msgUrl = message.url
-    var msgAttachements = [...message.attachments].map(e => e[1])
-    var msgCreatedTimestamp = message.createdTimestamp
-    var promises = []
-    promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_found (
-        discord_msg_id,
-        msg_id,
-        msg_channel_id,
-        msg_guild_id,
-        discord_user_id,
-        discord_user_avatar,
-        discord_user_tag,
-        msg_content,
-        msg_url,
-        created_time_stamp
-    ) VALUES (
-        "${_escpe(msgDiscordId)}",
-        "${_escpe(msgId)}",
-        "${_escpe(channelId)}",
-        "${_escpe(guildId)}",
-        "${_escpe(authorId)}",
-        "${_escpe(authorAvatar)}",
-        "${_escpe(authorName)}",
-        "${_escpe(msgContent)}",
-        "${_escpe(msgUrl)}",
-        "${_escpe(msgCreatedTimestamp)}"
-    )`))
-    for (let i = 0; i < msgAttachements.length; i++) {
-        const msgAttachement = msgAttachements[i];
-        promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_attachements (
-            msg_id,
-            attachement_url,
-            width,
-            height
-        ) VALUES (
-            "${_escpe(msgId)}",
-            "${_escpe(msgAttachement.url)}",
-            "${_escpe(msgAttachement.width)}",
-            "${_escpe(msgAttachement.height)}"
-        )`))
-    }
-    Promise.all(promises).then((data) => {
-        io.to(`discord_${guildId}_${channelId}`).emit("data_monitored", {
-            discord_msg_id: msgDiscordId,
-            msg_id: msgId,
-            msg_channel_id: channelId,
-            msg_guild_id: guildId,
-            discord_user_id: authorId,
-            discord_user_avatar: authorAvatar,
-            discord_user_tag: authorName,
-            msg_content: msgContent,
-            msg_url: msgUrl,
-            created_time_stamp: msgCreatedTimestamp,
-            attachments: msgAttachements.map(item => {
-                return {
-                    attachement_url: item.url,
-                    width: item.width,
-                    height: item.height
-                }
-            })
+
+    createMessage(message).then((data) => {
+
+        io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId })
+    })
+});
+function deleteMessage(message) {
+    return new Promise(async (resolve, reject) => {
+        var msgDiscordId = message.id
+        var channelId = message.channelId
+        var guildId = message.guildId
+        var promises = []
+        var data = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE discord_msg_id="${_escpe(msgDiscordId)}" AND msg_channel_id="${_escpe(channelId)}" AND msg_guild_id="${_escpe(guildId)}"`).then((results) => results[0])
+        promises.push(PromisifiedQuery(`DELETE FROM discord_msgs_found WHERE discord_msg_id="${_escpe(msgDiscordId)}" AND msg_channel_id="${_escpe(channelId)}" AND msg_guild_id="${_escpe(guildId)}"`))
+        promises.push(PromisifiedQuery(`DELETE FROM discord_msgs_attachements WHERE msg_id="${_escpe(data.msg_id)}"`))
+        Promise.all(promises).then(() => {
+            resolve()
+        })
+    })
+}
+
+bot.on('messageDelete', async (message) => {
+    var channelId = message.channelId
+    var guildId = message.guildId
+
+    deleteMessage(message).then(() => {
+        io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId })
+    })
+});
+bot.on('messageUpdate', async (message) => {
+    var channelId = message.channelId
+    var guildId = message.guildId
+
+    deleteMessage(message).then(() => {
+        createMessage(message).then((data) => {
+            io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId })
         })
     })
 });
@@ -350,9 +398,10 @@ io.on("connection", async (socket) => {
 
         for (let i = 0; i < twitterTasks.length; i++) {
             var twitterTask = twitterTasks[i];
-            var { handle, retweets, quote_tweets, type_twitter } = twitterTask
+            var { handle, retweets, quote_tweets } = twitterTask
+            var type_twitter = twitterTask.type
             var monitoredId = uuid()
-            promises.push(PromisifiedQuery(`INSERT INTO tasks_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
+            promises.push(PromisifiedQuery(`INSERT INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -368,26 +417,25 @@ io.on("connection", async (socket) => {
         for (let i = 0; i < discordTasks.length; i++) {
             var discordTask = discordTasks[i];
             var { channel_id, guild_id } = discordTask
-            var server_details = supportedServers.filter(e => e.guild_id == guild_id)[0] || {}
+            var server_details = supportedServers.filter(e => e.id == guild_id)[0] || {}
             var monitoredId = uuid()
-            promises.push(PromisifiedQuery(`INSERT INTO tasks_discord (task_id, monitored_id, channel_id, guild_id, icon, nameAcronym) 
+            promises.push(PromisifiedQuery(`INSERT INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id) 
             VALUES 
             (
                 "${_escpe(taskId)}",
                 "${_escpe(monitoredId)}",
                 "${_escpe(channel_id)}",
-                "${_escpe(guild_id)}",
-                "${_escpe(server_details.icon)}",
-                "${_escpe(server_details.nameAcronym)}"
+                "${_escpe(guild_id)}"
             ) `))
             socket.join(`discord_${guild_id}_${channel_id}`)
 
         }
         for (let i = 0; i < openseaTasks.length; i++) {
             var openseaTask = openseaTasks[i];
-            var { collection_name, type_opensea } = openseaTask
+            var { collection_name } = openseaTask
+            var type_opensea = openseaTask.type
             var monitoredId = uuid()
-            promises.push(PromisifiedQuery(`INSERT INTO tasks_opensea (task_id, monitored_id, collection_name, type) 
+            promises.push(PromisifiedQuery(`INSERT INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -400,7 +448,7 @@ io.on("connection", async (socket) => {
         }
         await Promise.all(promises)
         getData(userData).then((userData1) => {
-            socket.emit("userData-changed", userData1)
+            socket.emit("userData-changed", { reason: "create-task", data: userData1 })
             socket.emit("task-created", taskId)
             userData = userData1
         })
@@ -411,12 +459,12 @@ io.on("connection", async (socket) => {
         var data = action.data
 
         await PromisifiedQuery(`DELETE FROM tasks WHERE task_id="${_escpe(taskId)}"`)
-        var monitoredTwitterItems = await PromisifiedQuery(`SELECT * FROM tasks_twitter WHERE task_id="${_escpe(taskId)}"`)
-        await PromisifiedQuery(`DELETE FROM tasks_twitter WHERE task_id="${_escpe(taskId)}"`)
-        var monitoredDiscordItems = await PromisifiedQuery(`SELECT * FROM tasks_discord WHERE task_id="${_escpe(taskId)}"`)
-        await PromisifiedQuery(`DELETE FROM tasks_discord WHERE task_id="${_escpe(taskId)}"`)
-        var monitoredOpenseaItems = await PromisifiedQuery(`SELECT * FROM tasks_opensea WHERE task_id="${_escpe(taskId)}"`)
-        await PromisifiedQuery(`DELETE FROM tasks_opensea WHERE task_id="${_escpe(taskId)}"`)
+        var monitoredTwitterItems = await PromisifiedQuery(`SELECT * FROM monitored_items_twitter WHERE task_id="${_escpe(taskId)}"`)
+        await PromisifiedQuery(`DELETE FROM monitored_items_twitter WHERE task_id="${_escpe(taskId)}"`)
+        var monitoredDiscordItems = await PromisifiedQuery(`SELECT * FROM monitored_items_discord WHERE task_id="${_escpe(taskId)}"`)
+        await PromisifiedQuery(`DELETE FROM monitored_items_discord WHERE task_id="${_escpe(taskId)}"`)
+        var monitoredOpenseaItems = await PromisifiedQuery(`SELECT * FROM monitored_items_opensea WHERE task_id="${_escpe(taskId)}"`)
+        await PromisifiedQuery(`DELETE FROM monitored_items_opensea WHERE task_id="${_escpe(taskId)}"`)
 
 
 
@@ -437,7 +485,7 @@ io.on("connection", async (socket) => {
             socket.leave(`opensea_${collection_name}`)
         }
         getData(userData).then((userData1) => {
-            socket.emit("userData-changed", userData1)
+            socket.emit("userData-changed", { reason: "delete-task", data: userData1 })
             userData = userData1
         })
     })
@@ -447,8 +495,9 @@ io.on("connection", async (socket) => {
         var type = action.type
         var data = action.data
         if (type == "twitter") {
-            var { handle, retweets, quote_tweets, type_twitter } = data
-            await PromisifiedQuery(`INSERT INTO tasks_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
+            var { handle, retweets, quote_tweets } = data
+            var type_twitter = data.type
+            await PromisifiedQuery(`INSERT INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -462,21 +511,20 @@ io.on("connection", async (socket) => {
         } else if (type == "discord") {
             var { guild_id, channel_id } = data
 
-            var server_details = supportedServers.filter(e => e.guild_id == data.guild_id)[0] || {}
-            await PromisifiedQuery(`INSERT INTO tasks_discord (task_id, monitored_id, channel_id, guild_id, icon, nameAcronym) 
+            var server_details = supportedServers.filter(e => e.id == data.guild_id)[0] || {}
+            await PromisifiedQuery(`INSERT INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id ) 
             VALUES 
             (
                 "${_escpe(taskId)}",
                 "${_escpe(monitoredId)}",
                 "${_escpe(channel_id)}",
-                "${_escpe(guild_id)}",
-                "${_escpe(server_details.icon)}",
-                "${_escpe(server_details.nameAcronym)}"
+                "${_escpe(guild_id)}"
             ) `)
             socket.join(`discord_${guild_id}_${channel_id}`)
         } else if (type == "opensea") {
-            var { collection_name, type_opensea } = data
-            await PromisifiedQuery(`INSERT INTO tasks_opensea (task_id, monitored_id, collection_name, type) 
+            var { collection_name } = data
+            var type_opensea = data.type
+            await PromisifiedQuery(`INSERT INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -487,7 +535,7 @@ io.on("connection", async (socket) => {
             socket.join(`opensea_${collection_name}`)
         }
         getData(userData).then((userData1) => {
-            socket.emit("userData-changed", userData1)
+            socket.emit("userData-changed", { reason: "add-monitored-item", data: userData1 })
             userData = userData1
         })
 
@@ -495,10 +543,10 @@ io.on("connection", async (socket) => {
 
     socket.on("delete-monitored-item", async (action) => {
         var monitoredId = action.monitoredId
+        var taskId = action.taskId
         var type = action.type || null
-        var data = action.data
-
-        await PromisifiedQuery(`DELETE FROM tasks_${_escpe(type)} WHERE monitored_id="${_escpe(monitoredId)}"`)
+        var data = await PromisifiedQuery(`SELECT * FROM monitored_items_${_escpe(type)} WHERE task_id="${_escpe(taskId)}" AND monitored_id="${_escpe(monitoredId)}"`).then((results) => results[0])
+        await PromisifiedQuery(`DELETE FROM monitored_items_${_escpe(type)} WHERE task_id="${_escpe(taskId)}" AND monitored_id="${_escpe(monitoredId)}"`)
         if (type == "discord") {
             var { guild_id, channel_id } = data
             socket.leave(`discord_${guild_id}_${channel_id}`)
@@ -510,7 +558,7 @@ io.on("connection", async (socket) => {
             socket.leave(`twitter_${handle}`)
         }
         getData(userData).then((userData1) => {
-            socket.emit("userData-changed", userData1)
+            socket.emit("userData-changed", { reason: "delete-monitored-item", data: userData1 })
             userData = userData1
         })
 
@@ -518,9 +566,9 @@ io.on("connection", async (socket) => {
     socket.on("get-supported-servers", action => {
         socket.emit("supported-servers-changed", Store.supportedServers)
     })
-    socket.on("get-data", action => {
+    socket.on("req-data-monitored", action => {
         getData(userData).then((userData1) => {
-            socket.emit("userData-changed", userData1)
+            socket.emit("userData-changed", { reason: "res-data-monitored", data: userData1 })
             userData = userData1
         })
     })
@@ -533,7 +581,7 @@ function setInitialStoreValues() {
         return {
             id: supportedServer.id,
             name: supportedServer.name,
-            icon: supportedServer.icon,
+            icon: `https://cdn.discordapp.com/icons/${supportedServer.id}/${supportedServer.icon}.webp`,
             nameAcronym: supportedServer.nameAcronym,
             channels: nonCategoryChannel.map(e => {
                 return {

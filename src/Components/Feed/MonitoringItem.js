@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import { CurrentTask, X_icon } from "../../assets";
+import { useSelector, useDispatch } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
+const MonitoringItem = ({ icon, name, isVerified, letter, monitorItemId, type }) => {
+  const socket = useSelector((state) => state.socket)
+  const location = useLocation();
+  const taskId = location.pathname.split("/")[3] || null;
 
-const MonitoringItem = ({ icon, name, isVerified, letter }) => {
   function removeTask() {
-
+    socket.emit('delete-monitored-item', { taskId, monitoredId: monitorItemId, type })
   }
 
   return (
@@ -18,8 +23,8 @@ const MonitoringItem = ({ icon, name, isVerified, letter }) => {
 
           </div>
           {
-            icon != "" ?
-              <img src={icon} /> :
+            icon != "" && icon != null ?
+              <img src={icon} style={{ width: '43px', borderRadius: '50%', height: '43px' }} /> :
               <span style={{ width: '43px', background: '#6362F0', color: "white", borderRadius: '50%', height: '43px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{letter}</span>
           }
         </div>

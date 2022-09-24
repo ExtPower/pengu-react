@@ -129,6 +129,7 @@ span.backkintel {
   flex-direction: column;
   border-left: 1px solid #e6e7ea;
   min-width: 400px;
+  max-width: 400px;
 }
 
 .tableColumn:nth-child(1) {
@@ -173,9 +174,10 @@ span.backkintel {
 }
 .tableFeed {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   transform: translateX(-24px);
   width: calc(100% + 24px);
+  height: calc(100% - 220px);
   overflow: hidden;
 }
 
