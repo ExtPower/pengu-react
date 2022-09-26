@@ -3,7 +3,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
 const Store = require('./modules/Store.js');
-const { PromisifiedQuery, _escpe, getData, checkAuth } = require('./modules/functions.js');
+const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth } = require('./modules/functions.js');
 const app = express();
 
 
@@ -27,14 +27,69 @@ passport.use(new TwitterStrategy({
     callbackURL: process.env.CLIENT_REDIRECT_TWITTER,
     passReqToCallback: true,
 },
-    function (req, token, tokenSecret, profile, done) {
+    async function (req, token, tokenSecret, profile, done) {
         var user = req.user
         var twitterId = profile.id
-
+        var username = profile.username
+        var displayName = profile.displayName
+        var profilePicutre = profile.photos?.[0]?.value || ""
         try {
+            if (req.isAuthenticated()) {
+                var twitterUser = await PromisifiedQuery(`SELECT * FROM twitter_account WHERE twitter_id="${_escpe(twitterId)}"`)
+                    .then((results) => {
+                        return results[0] || { twitter_id: null }
+                    });
+                if (twitterUser.twitter_id != null) {
+                    console.log("User exists");
+                    if (twitterUser.username != username || twitterUser.profile_picutre != profilePicutre || twitterUser.display_name != displayName || twitterUser.token != token || twitterUser.tokenSecret != tokenSecret) {
+                        await PromisifiedQuery(`UPDATE twitter_account SET 
+                            username="${_escpe(username)}",
+                            display_name="${_escpe(displayName)}",
+                            profile_picutre="${_escpe(profilePicutre)}",
+                            token="${_escpe(token)}",
+                            tokenSecret="${_escpe(tokenSecret)}"
+                        WHERE user_id="${_escpe(user.user_id)}"`).then(() => {
+                            user = {
+                                ...user,
+                                username,
+                                profile_picutre: profilePicutre,
+                                token: token,
+                                tokenSecret: tokenSecret,
+                            }
+                        })
+                    }
+                } else {
+                    console.log("User does not exist");
+                    await PromisifiedQuery(`INSERT INTO twitter_account(user_id, twitter_id, username, display_name, profile_picutre, token, tokenSecret)
+                        VALUES 
+                    (
+                        "${_escpe(user.user_id)}",
+                        "${_escpe(twitterId)}",
+                        "${_escpe(username)}",
+                        "${_escpe(displayName)}",
+                        "${_escpe(profilePicutre)}",
+                        "${_escpe(token)}",
+                        "${_escpe(tokenSecret)}"
+                    )`).then((results) => {
+                        console.log("User created");
+                        user = {
+                            user_id: user.user_id,
+                            twitter_id: twitterId,
+                            username,
+                            display_name: displayName,
+                            profile_picutre: profilePicutre,
+                            token: token,
+                            tokenSecret: tokenSecret,
+                        }
+                    })
+                }
 
-            console.log("User submitted");
-            done(null, { ...user });
+                console.log("User submitted");
+                done(null, user);
+            } else {
+
+                done("twitter: Not logged in", null);
+            }
         } catch (err) {
             console.log("Twitter Token Err");
             console.log(err);
@@ -315,11 +370,14 @@ app.use(passport.session());
 
 
 app.use('/auth', authRoute);
-app.get("/login", function (req, res) {
+app.get("/login", checkNotAuth, function (req, res) {
     res.redirect("/")
 })
-app.get(["/", "/dashboard*"], checkAuth, async function (req, res) {
-    res.sendFile(path.join(__dirname, 'static/index.html'));
+app.get("/", checkNotAuth, function (req, res) {
+    res.sendFile(path.join(__dirname, 'static/website.html'));
+})
+app.get("/dashboard*", checkAuth, function (req, res) {
+    res.sendFile(path.join(__dirname, 'static/website.html'));
 })
 
 
@@ -565,6 +623,12 @@ io.on("connection", async (socket) => {
     })
     socket.on("get-supported-servers", action => {
         socket.emit("supported-servers-changed", Store.supportedServers)
+    })
+    socket.on("get-data", action => {
+        getData(userData).then((userData1) => {
+            socket.emit("userData-changed", { reason: "get-data", data: userData1 })
+            userData = userData1
+        })
     })
     socket.on("req-data-monitored", action => {
         getData(userData).then((userData1) => {

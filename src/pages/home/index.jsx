@@ -56,8 +56,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import InputAdornment from "@mui/material/InputAdornment";
 import { BorderAll } from "@mui/icons-material";
 import { io } from "socket.io-client";
-import Store from "../../store";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 const drawerWidth = 240;
 
 const openedMixin = (theme) => ({
@@ -148,7 +147,7 @@ const list = [
 ];
 export default function DashBoard() {
   const location = useLocation();
-
+  const dispatch = useDispatch();
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [ComponenNamee, setComponenNamee] = React.useState("Home");
@@ -172,10 +171,10 @@ export default function DashBoard() {
   }, [userData, location]);
   useEffect(() => {
     const socket = io("http://localhost:3000");
-    Store.dispatch({ type: "change-data", name: "socket", value: socket });
+    dispatch({ type: "change-data", name: "socket", value: socket });
     socket.on("connected", (data) => {
       socket.on("supported-servers-changed", (data) => {
-        Store.dispatch({
+        dispatch({
           name: "supportedServers",
           type: "change-data",
           value: data,
@@ -186,7 +185,7 @@ export default function DashBoard() {
       });
 
       socket.on("userData-changed", (action) => {
-        Store.dispatch({
+        dispatch({
           name: "userData",
           type: "change-data",
           value: action.data,

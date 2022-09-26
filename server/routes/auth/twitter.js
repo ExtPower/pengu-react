@@ -5,7 +5,7 @@ const router = require('express').Router();
 router.get("/", passport.authenticate("twitter"));
 
 router.get('/redirect',
-    passport.authenticate('twitter', { failureRedirect: '/forbidden' }),
+    passport.authenticate('twitter', { failureRedirect: '/login' }),
     function (req, res) {
         res.redirect('/dashboard');
     });
