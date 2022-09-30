@@ -115,8 +115,9 @@ import Back_button_icon from "./images/back_button_icon.svg";
 import X_icon from "./images/x_icon.svg";
 import Down_arrow_black from "./images/down_arrow_black.svg";
 import Down_arrow_gray from "./images/down_arrow_gray.svg";
-
+import Loader from "./loader.gif"
 export {
+  Loader,
   HomeeWhitee,
   TopPeenguu,
   SettingsWhite,

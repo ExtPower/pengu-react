@@ -3,5 +3,9 @@ const path = require('path');
 copyToStatic()
 function copyToStatic() {
     fs.copySync(path.join(__dirname, "../build"), path.join(__dirname, "../server/static"));
-    console.log("done");
+    fs.rename(path.join(__dirname, "../server/static/index.html"), path.join(__dirname, "../server/static/website.html"), function () {
+
+
+        console.log("done");
+    })
 }

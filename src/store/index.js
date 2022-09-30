@@ -16,6 +16,15 @@ const userData = ((state = { user_id: null }, action) => {
     }
 
 })
+// const tasksChanges = ((state = [], action) => {
+//     if (action.type == "change-data" && action.name == "tasksChanges") {
+//         return action.value
+//     } else {
+//         return state
+//     }
+
+// })
+
 const supportedServers = ((state = [], action) => {
     if (action.type == "change-data" && action.name == "supportedServers") {
         return action.value

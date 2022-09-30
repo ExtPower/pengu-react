@@ -19,7 +19,6 @@ function Wallet() {
   return (
     <div className="mainHome">
       <div className="leeftPart wallet">
-        <Navbar ComponenNamee="Wallet" />
         <div className="walletMainflex">
           <div className="priceewalleet">
             <p>Net Worth</p>

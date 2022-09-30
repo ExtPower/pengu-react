@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Loader } from "../../assets";
 import { useEffect } from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -152,6 +153,7 @@ export default function DashBoard() {
   const [open, setOpen] = React.useState(false);
   const [ComponenNamee, setComponenNamee] = React.useState("Home");
   const userData = useSelector((state) => state.userData);
+  // const tasksChanges = useSelector((state) => state.tasksChanges);
   const navigate = useNavigate();
   useEffect(() => {
     var pageName = location.pathname.split("/dashboard/")[1];
@@ -170,7 +172,7 @@ export default function DashBoard() {
     setComponenNamee(pageName);
   }, [userData, location]);
   useEffect(() => {
-    const socket = io("http://localhost:3000");
+    const socket = io("http://penguplatform.com");
     dispatch({ type: "change-data", name: "socket", value: socket });
     socket.on("connected", (data) => {
       socket.on("supported-servers-changed", (data) => {
@@ -181,10 +183,33 @@ export default function DashBoard() {
         });
       });
       socket.on("data-monitored", (action) => {
-        socket.emit("req-data-monitored");
+        socket.emit("req-data-monitored", action);
       });
 
       socket.on("userData-changed", (action) => {
+        // var ogData = action.type.ogData
+        // if (
+        //   ogData.reason == "messageCreate" &&
+        //   ogData.type == "discord"
+        // ) {
+        //   var tasksAffected = userData.tasks.filter((task) =>
+        //     task.monitoredItems.discord.filter(
+        //       (monitoredItemDiscord) =>
+        //         monitoredItemDiscord.guild_id == ogData.guild_id &&
+        //         monitoredItemDiscord.channel_id == ogData.channel_id
+        //     )
+        //   );
+        //   var taskChangesArr = [
+        //     ...tasksChanges.filter((e) => e.task_id != ogData),
+        //   ];
+        //   dispatch({
+        //     name: "tasksChanges",
+        //     type: "change-data",
+        //     value: action.data,
+        //   });
+
+        //   return;
+        // }
         dispatch({
           name: "userData",
           type: "change-data",
@@ -212,10 +237,24 @@ export default function DashBoard() {
   // }
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-      {location.pathname !== "/dashboard/Home" &&
-        location.pathname !== "/dashboard/Wallet" && (
+    <div
+      style={
+        userData.verified != true
+          ? {
+              height: "100vh",
+              width: "100vw",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }
+          : {}
+      }
+    >
+      {userData.user_id == null ? (
+        <img src={Loader} style={{ height: "300px" }} alt="" />
+      ) : (
+        <Box sx={{ display: "flex" }}>
+          <CssBaseline />
           <AppBar position="fixed" open={open}>
             <Navbar
               open={open}
@@ -223,10 +262,10 @@ export default function DashBoard() {
               ComponenNamee={ComponenNamee}
             />
           </AppBar>
-        )}
-      <Drawer variant="permanent" open={open}>
-        <DrawerHeader sx={{ padding: 0, marginRight: 0 }}>
-          {/* <IconButton onClick={handleDrawerClose}>
+          {userData.verified && (
+            <Drawer variant="permanent" open={open}>
+              <DrawerHeader sx={{ padding: 0, marginRight: 0 }}>
+                {/* <IconButton onClick={handleDrawerClose}>
             {theme.direction === "rtl" ? (
               <ChevronRightIcon />
             ) : (
@@ -234,26 +273,30 @@ export default function DashBoard() {
             )}
           </IconButton> */}
 
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            // onClick={handleDrawerOpen}
-            edge="start"
-            className="LOGOO"
-            sx={{
-              marginRight: 5,
-              ...(open && { display: "none" }),
-            }}
-          >
-            <img src={Logo} />
-          </IconButton>
-        </DrawerHeader>
-        {/* <Divider /> */}
-        <List>
-          {list.map((item, index) => (
-            <ListItem key={index} disablePadding sx={{ display: "block" }}>
-              <Link to={`/dashboard/${item.text[0]}`}>
-                {/* <Tooltip
+                <IconButton
+                  color="inherit"
+                  aria-label="open drawer"
+                  // onClick={handleDrawerOpen}
+                  edge="start"
+                  className="LOGOO"
+                  sx={{
+                    marginRight: 5,
+                    ...(open && { display: "none" }),
+                  }}
+                >
+                  <img src={Logo} />
+                </IconButton>
+              </DrawerHeader>
+              {/* <Divider /> */}
+              <List>
+                {list.map((item, index) => (
+                  <ListItem
+                    key={index}
+                    disablePadding
+                    sx={{ display: "block" }}
+                  >
+                    <Link to={`/dashboard/${item.text[0]}`}>
+                      {/* <Tooltip
                   title={item.text[0]}
                   placement="right-start"
                   componentsProps={{
@@ -269,37 +312,131 @@ export default function DashBoard() {
                     },
                   }}
                 > */}
-                <Tooltip
-                  title={item.text[0]}
-                  placement="right"
-                  componentsProps={{
-                    tooltip: {
-                      sx: {
-                        backgroundColor: "#F5F4F6",
-                        color: "#A0A1A9",
-                        borderRadius: "10px",
-                        paddingLeft: "12px",
-                        paddingRight: "12px",
-                        // fontSize: '16px',
-                      },
-                    },
-                  }}
-                >
+                      <Tooltip
+                        title={item.text[0]}
+                        placement="right"
+                        componentsProps={{
+                          tooltip: {
+                            sx: {
+                              backgroundColor: "#F5F4F6",
+                              color: "#A0A1A9",
+                              borderRadius: "10px",
+                              paddingLeft: "12px",
+                              paddingRight: "12px",
+                              // fontSize: '16px',
+                            },
+                          },
+                        }}
+                      >
+                        <ListItemButton
+                          sx={{
+                            minHeight: 48,
+                            justifyContent: open ? "initial" : "center",
+                            px: 2.5,
+                          }}
+                          className={
+                            item.text.some(
+                              (text) =>
+                                `/dashboard/${text}` === location.pathname
+                            )
+                              ? "backlogg"
+                              : ""
+                          }
+                          onClick={() => {
+                            setComponenNamee(item.text[0]);
+                          }}
+                        >
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 0,
+                              mr: open ? 3 : "auto",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <img
+                              src={
+                                item.text.some(
+                                  (text) =>
+                                    `/dashboard/${text}` === location.pathname
+                                )
+                                  ? item.after
+                                  : item.img
+                              }
+                            ></img>
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={item.text[0]}
+                            sx={{ opacity: open ? 1 : 0 }}
+                          />
+                        </ListItemButton>
+                      </Tooltip>
+                    </Link>
+                  </ListItem>
+                ))}
+              </List>
+              {/* <Divider /> */}
+              <List>
+                <Link to="/dashboard/Settings">
+                  <ListItem disablePadding sx={{ display: "block" }}>
+                    <Tooltip
+                      title="Settings"
+                      placement="right-start"
+                      componentsProps={{
+                        tooltip: {
+                          sx: {
+                            backgroundColor: "#F5F4F6",
+                            color: "#A0A1A9",
+                            borderRadius: "10px",
+                            // padding: '10px 20px',
+                            // fontSize: '16px',
+                          },
+                        },
+                      }}
+                    >
+                      <ListItemButton
+                        className={
+                          location.pathname == `/dashboard/Settings`
+                            ? "backlogg"
+                            : "seeetingss"
+                        }
+                        sx={{
+                          minHeight: 48,
+                          justifyContent: open ? "initial" : "center",
+                          px: 2.5,
+                        }}
+                        onClick={() => {
+                          setComponenNamee("Settings");
+                        }}
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 0,
+                            mr: open ? 3 : "auto",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <img
+                            src={
+                              location.pathname == `/dashboard/Settings`
+                                ? SettingsWhite
+                                : Settings
+                            }
+                          ></img>
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Settings"
+                          sx={{ opacity: open ? 1 : 0 }}
+                        />
+                      </ListItemButton>
+                    </Tooltip>
+                  </ListItem>
+                </Link>
+                <ListItem disablePadding sx={{ display: "block" }}>
                   <ListItemButton
                     sx={{
                       minHeight: 48,
                       justifyContent: open ? "initial" : "center",
                       px: 2.5,
-                    }}
-                    className={
-                      item.text.some(
-                        (text) => `/dashboard/${text}` === location.pathname
-                      )
-                        ? "backlogg"
-                        : ""
-                    }
-                    onClick={() => {
-                      setComponenNamee(item.text[0]);
                     }}
                   >
                     <ListItemIcon
@@ -309,145 +446,62 @@ export default function DashBoard() {
                         justifyContent: "center",
                       }}
                     >
-                      <img
-                        src={
-                          item.text.some(
-                            (text) => `/dashboard/${text}` === location.pathname
-                          )
-                            ? item.after
-                            : item.img
-                        }
-                      ></img>
+                      <span className="proffillee">
+                        {" "}
+                        <img
+                          src={userData.discord_avatar}
+                          style={{ borderRadius: "50%" }}
+                        ></img>
+                      </span>
+                      <span className="proffileeOb">
+                        <img className="opss" src={GameProfile}></img>
+                      </span>
                     </ListItemIcon>
                     <ListItemText
-                      primary={item.text[0]}
+                      primary="Profile"
                       sx={{ opacity: open ? 1 : 0 }}
                     />
                   </ListItemButton>
-                </Tooltip>
-              </Link>
-            </ListItem>
-          ))}
-        </List>
-        {/* <Divider /> */}
-        <List>
-          <Link to="/dashboard/Settings">
-            <ListItem disablePadding sx={{ display: "block" }}>
-              <Tooltip
-                title="Settings"
-                placement="right-start"
-                componentsProps={{
-                  tooltip: {
-                    sx: {
-                      backgroundColor: "#F5F4F6",
-                      color: "#A0A1A9",
-                      borderRadius: "10px",
-                      // padding: '10px 20px',
-                      // fontSize: '16px',
-                    },
-                  },
-                }}
-              >
-                <ListItemButton
-                  className={
-                    location.pathname == `/dashboard/Settings`
-                      ? "backlogg"
-                      : "seeetingss"
-                  }
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: open ? "initial" : "center",
-                    px: 2.5,
-                  }}
-                  onClick={() => {
-                    setComponenNamee("Settings");
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: open ? 3 : "auto",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <img
-                      src={
-                        location.pathname == `/dashboard/Settings`
-                          ? SettingsWhite
-                          : Settings
-                      }
-                    ></img>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Settings"
-                    sx={{ opacity: open ? 1 : 0 }}
-                  />
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-          </Link>
-          <ListItem disablePadding sx={{ display: "block" }}>
-            <ListItemButton
+                </ListItem>
+              </List>
+            </Drawer>
+          )}
+          {userData.verified && (
+            <Box
+              component="main"
               sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
+                flexGrow: 1,
+                p: 3,
+                height: "100vh",
+                paddingTop: 0,
+                paddingRight: 0,
+                paddingBottom: 0,
+                display: "flex",
+                flexDirection: "column",
+                maxWidth: "calc(100% - 65px)",
               }}
             >
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+              {location.pathname !== "/dashboard/Home" &&
+                location.pathname !== "/dashboard/Wallet" && <DrawerHeader />}
+              <div
+                className="Main_content"
+                style={{
+                  height:
+                    location.pathname === "/dashboard/Settings"
+                      ? "unset"
+                      : location.pathname === "/dashboard/Home" ||
+                        location.pathname === "/dashboard/Wallet"
+                      ? "100%"
+                      : "calc(100% - 64px)",
                 }}
               >
-                <span className="proffillee">
-                  {" "}
-                  <img
-                    src={userData.discord_avatar}
-                    style={{ borderRadius: "50%" }}
-                  ></img>
-                </span>
-                <span className="proffileeOb">
-                  <img className="opss" src={GameProfile}></img>
-                </span>
-              </ListItemIcon>
-              <ListItemText primary="Profile" sx={{ opacity: open ? 1 : 0 }} />
-            </ListItemButton>
-          </ListItem>
-        </List>
-      </Drawer>
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          height: "100vh",
-          paddingTop: 0,
-          paddingRight: 0,
-          paddingBottom: 0,
-          display: "flex",
-          flexDirection: "column",
-          maxWidth: "calc(100% - 65px)",
-        }}
-      >
-        {location.pathname !== "/dashboard/Home" &&
-          location.pathname !== "/dashboard/Wallet" && <DrawerHeader />}
-        <div
-          className="Main_content"
-          style={{
-            height:
-              location.pathname === "/dashboard/Settings"
-                ? "unset"
-                : location.pathname === "/dashboard/Home" ||
-                  location.pathname === "/dashboard/Wallet"
-                ? "100%"
-                : "calc(100% - 64px)",
-          }}
-        >
-          <Outlet />
-        </div>
-      </Box>
-    </Box>
+                <Outlet />
+              </div>
+            </Box>
+          )}
+          {!userData.verified && <h1>You are not verified</h1>}
+        </Box>
+      )}
+    </div>
   );
 }

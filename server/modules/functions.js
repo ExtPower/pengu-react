@@ -5,12 +5,14 @@ function getData(user1) {
         var user = { ...user1 }
         var userId = user.user_id
         delete user.id
+        var twitterAcc = await PromisifiedQuery(`SELECT * FROM twitter_account WHERE user_id="${_escpe(userId)}"`).then((res) => res[0] || { twitter_id: null })
         var tasks = await PromisifiedQuery(`SELECT * FROM tasks WHERE user_id="${_escpe(userId)}"`)
         var monitoredItemsTwitter = await PromisifiedQuery(`SELECT * FROM monitored_items_twitter WHERE 1`)
         var monitoredItemsDiscord = await PromisifiedQuery(`SELECT * FROM monitored_items_discord WHERE 1`)
         var monitoredItemsOpensea = await PromisifiedQuery(`SELECT * FROM monitored_items_opensea WHERE 1`)
         var discord_msgs = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE 1`)
         var discord_msgs_attachements = await PromisifiedQuery(`SELECT * FROM discord_msgs_attachements WHERE 1`)
+        user.twitterAcc = twitterAcc
         for (let i = 0; i < discord_msgs.length; i++) {
             var discord_msg = discord_msgs[i];
             discord_msg.attachements = discord_msgs_attachements.filter(e => e.msg_id == discord_msg.msg_id)

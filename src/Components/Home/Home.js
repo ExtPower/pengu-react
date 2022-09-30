@@ -10,9 +10,8 @@ import Navbar from "../Navbar";
 
 function Home() {
   return (
-    <div className="mainHome">
+    <div className="mainHome" style={{ paddingTop: "65px" }}>
       <div className="leeftPart">
-        <Navbar ComponenNamee="Home" />
         <Balance />
         <DataCenter />
         <LinksMain />

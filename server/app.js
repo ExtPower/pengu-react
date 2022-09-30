@@ -5,7 +5,7 @@ const { instrument } = require("@socket.io/admin-ui");
 const Store = require('./modules/Store.js');
 const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth } = require('./modules/functions.js');
 const app = express();
-
+const Twit = require("twit")
 
 const session = require('express-session');
 const passport = require('passport');
@@ -18,6 +18,8 @@ const uuid = require("uuid").v4
 dotenv.config({ path: path.join(__dirname, ".env") })
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'static')))
+const server_id = "1025057951238586379"
+const verified_role_id = "1025058037666414622"
 
 // twitter strategie
 const TwitterStrategy = require("passport-twitter").Strategy;
@@ -104,8 +106,6 @@ passport.use(new TwitterStrategy({
 // end
 // discord
 const { Client, GatewayIntentBits, Partials } = require('discord.js')
-const server_id = "1008830510665039942"
-const verified_role_id = "1008831152380981288"
 const bot = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -135,6 +135,7 @@ bot.on('guildCreate', async (guild) => {
 });
 bot.on('guildDelete', async (guild) => {
     changeSupportedServers()
+    await PromisifiedQuery(`DELETE FROM monitored_items_discord WHERE guild_id="${_escpe(guild.id)}"`)
 });
 bot.on('guildUpdate', async (guildOld, guildNew) => {
     changeSupportedServers()
@@ -142,77 +143,79 @@ bot.on('guildUpdate', async (guildOld, guildNew) => {
 
 function createMessage(message) {
     return new Promise((resolve, reject) => {
+        if (!message.system) {
 
-        var author = message.author
-        var msgDiscordId = message.id
-        var msgId = uuid()
-        var channelId = message.channelId
-        var guildId = message.guildId
-        var authorId = author.id
-        var authorAvatar = `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png`
-        var authorName = author.tag
-        var msgContent = message.content
-        var msgUrl = message.url
-        var msgAttachements = [...message.attachments].map(e => e[1])
-        var msgCreatedTimestamp = message.createdTimestamp
-        var promises = []
-        promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_found (
-            discord_msg_id,
-            msg_id,
-            msg_channel_id,
-            msg_guild_id,
-            discord_user_id,
-            discord_user_avatar,
-            discord_user_tag,
-            msg_content,
-            msg_url
-        ) VALUES (
-            "${_escpe(msgDiscordId)}",
-            "${_escpe(msgId)}",
-            "${_escpe(channelId)}",
-            "${_escpe(guildId)}",
-            "${_escpe(authorId)}",
-            "${_escpe(authorAvatar)}",
-            "${_escpe(authorName)}",
-            "${_escpe(msgContent)}",
-            "${_escpe(msgUrl)}"
-        )`))
-        for (let i = 0; i < msgAttachements.length; i++) {
-            const msgAttachement = msgAttachements[i];
-            promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_attachements (
+            var author = message.author
+            var msgDiscordId = message.id
+            var msgId = uuid()
+            var channelId = message.channelId
+            var guildId = message.guildId
+            var authorId = author.id
+            var authorAvatar = author.avatar == null ? `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png` : author.defaultAvatarURL
+            var authorName = author.tag
+            var msgContent = message.content
+            var msgUrl = message.url
+            var msgAttachements = [...message.attachments].map(e => e[1])
+            var msgCreatedTimestamp = message.createdTimestamp
+            var promises = []
+            promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_found (
+                discord_msg_id,
                 msg_id,
-                attachement_url,
-                width,
-                height
+                msg_channel_id,
+                msg_guild_id,
+                discord_user_id,
+                discord_user_avatar,
+                discord_user_tag,
+                msg_content,
+                msg_url
             ) VALUES (
+                "${_escpe(msgDiscordId)}",
                 "${_escpe(msgId)}",
-                "${_escpe(msgAttachement.url)}",
-                "${_escpe(msgAttachement.width)}",
-                "${_escpe(msgAttachement.height)}"
+                "${_escpe(channelId)}",
+                "${_escpe(guildId)}",
+                "${_escpe(authorId)}",
+                "${_escpe(authorAvatar)}",
+                "${_escpe(authorName)}",
+                "${_escpe(msgContent)}",
+                "${_escpe(msgUrl)}"
             )`))
-        }
-        Promise.all(promises).then((data) => {
-            var dataToSend = {
-                discord_msg_id: msgDiscordId,
-                msg_id: msgId,
-                msg_channel_id: channelId,
-                msg_guild_id: guildId,
-                discord_user_id: authorId,
-                discord_user_avatar: authorAvatar,
-                discord_user_tag: authorName,
-                msg_content: msgContent,
-                msg_url: msgUrl,
-                created_time_stamp: msgCreatedTimestamp,
-                attachments: msgAttachements.map(item => {
-                    return {
-                        attachement_url: item.url,
-                        width: item.width,
-                        height: item.height
-                    }
-                })
+            for (let i = 0; i < msgAttachements.length; i++) {
+                const msgAttachement = msgAttachements[i];
+                promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_attachements (
+                    msg_id,
+                    attachement_url,
+                    width,
+                    height
+                ) VALUES (
+                    "${_escpe(msgId)}",
+                    "${_escpe(msgAttachement.url)}",
+                    "${_escpe(msgAttachement.width)}",
+                    "${_escpe(msgAttachement.height)}"
+                )`))
             }
-            resolve(dataToSend)
-        })
+            Promise.all(promises).then((data) => {
+                var dataToSend = {
+                    discord_msg_id: msgDiscordId,
+                    msg_id: msgId,
+                    msg_channel_id: channelId,
+                    msg_guild_id: guildId,
+                    discord_user_id: authorId,
+                    discord_user_avatar: authorAvatar,
+                    discord_user_tag: authorName,
+                    msg_content: msgContent,
+                    msg_url: msgUrl,
+                    created_time_stamp: msgCreatedTimestamp,
+                    attachments: msgAttachements.map(item => {
+                        return {
+                            attachement_url: item.url,
+                            width: item.width,
+                            height: item.height
+                        }
+                    })
+                }
+                resolve(dataToSend)
+            })
+        }
     })
 }
 
@@ -222,7 +225,7 @@ bot.on('messageCreate', async (message) => {
 
     createMessage(message).then((data) => {
 
-        io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId })
+        io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageCreate" })
     })
 });
 function deleteMessage(message) {
@@ -245,7 +248,7 @@ bot.on('messageDelete', async (message) => {
     var guildId = message.guildId
 
     deleteMessage(message).then(() => {
-        io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId })
+        io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageDelete" })
     })
 });
 bot.on('messageUpdate', async (message) => {
@@ -254,9 +257,12 @@ bot.on('messageUpdate', async (message) => {
 
     deleteMessage(message).then(() => {
         createMessage(message).then((data) => {
-            io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId })
+            io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageUpdate" })
         })
     })
+});
+bot.on("guildMemberUpdate", (oldMember, newMember) => {
+    changeSupportedServers()
 });
 
 
@@ -406,8 +412,9 @@ io.on("connection", async (socket) => {
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
     var user = { user_id, email, username, discord_id, discord_avatar }
     var userData = await getData(user)
+    userData.verified = true
     if (Store.verifiedUsers.filter(e => e == userData.discord_id).length == 0) {
-        socket.disconnect()
+        userData.verified = false
     }
     socket.emit("connected")
     var { tasks } = userData
@@ -421,17 +428,37 @@ io.on("connection", async (socket) => {
         monitoredItemsDiscord.push(...monitoredItems.discord)
         monitoredItemsOpensea.push(...monitoredItems.opensea)
     });
+    var alreadyJoinedTwitter = []
+    var alreadyJoinedDiscord = []
+    var alreadyJoinedOpensea = []
     for (let i = 0; i < monitoredItemsTwitter.length; i++) {
         const twitterTask = monitoredItemsTwitter[i]
+        if (alreadyJoinedTwitter.filter(e => e == twitterTask.handle).length == 0) {
+            alreadyJoinedTwitter.push(twitterTask.handle)
+        } else {
+            continue
+        }
         socket.join(`twitter_${twitterTask.handle}`)
 
     }
     for (let i = 0; i < monitoredItemsDiscord.length; i++) {
         const discordTask = monitoredItemsDiscord[i]
+        if (alreadyJoinedDiscord.filter(e => e.guild_id == discordTask.guild_id && e.channel_id == discordTask.channel_id).length == 0) {
+            alreadyJoinedDiscord.push(discordTask)
+        } else {
+            continue
+        }
+
         socket.join(`discord_${discordTask.guild_id}_${discordTask.channel_id}`)
     }
     for (let i = 0; i < monitoredItemsOpensea.length; i++) {
         const openseaTask = monitoredItemsOpensea[i]
+        if (alreadyJoinedOpensea.filter(e => e == openseaTask.collection_name).length == 0) {
+            alreadyJoinedOpensea.push(openseaTask.collection_name)
+        } else {
+            continue
+        }
+
         socket.join(`opensea_${openseaTask.collection_name}`)
 
     }
@@ -632,7 +659,7 @@ io.on("connection", async (socket) => {
     })
     socket.on("req-data-monitored", action => {
         getData(userData).then((userData1) => {
-            socket.emit("userData-changed", { reason: "res-data-monitored", data: userData1 })
+            socket.emit("userData-changed", { reason: "res-data-monitored", data: userData1, ogData: action })
             userData = userData1
         })
     })
@@ -661,4 +688,4 @@ function setInitialStoreValues() {
 instrument(io, {
     auth: false
 });
-httpServer.listen(3000);
+httpServer.listen(80);

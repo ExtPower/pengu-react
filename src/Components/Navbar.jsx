@@ -8,17 +8,13 @@ import SearchIcon from "@mui/icons-material/Search";
 import InputAdornment from "@mui/material/InputAdornment";
 
 import { Logo, Logout, Switch, Copy_Adress, Cat_Bg } from "../assets/index";
+import { useSelector } from "react-redux";
 
-interface NavbarProps {
-  open: boolean;
-  handleDrawerOpen: () => void;
-  ComponenNamee: string;
-}
-
-const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
+const Navbar = ({ open, handleDrawerOpen, ComponenNamee }) => {
   const location = useLocation();
+  const userData = useSelector((state) => state.userData);
 
-  const greeting = (loc: string): string => {
+  const greeting = (loc) => {
     switch (loc) {
       case "/dashboard/Wallet":
         return "Monitoring 11 assets";
@@ -35,7 +31,10 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
 
   return (
     <Toolbar className="navbarToolbar">
-      <div className="item one">
+      <div
+        className="item one"
+        style={{ visibility: userData.verified ? "unset" : "hidden" }}
+      >
         <label
           className="HeadingMain"
           style={{
@@ -52,21 +51,26 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
           <span className="welcopmeInfo">{greeting(location.pathname)}</span>
         </label>
       </div>
-      <div className="item two">
+
+      <div
+        className="item two"
+        style={{ visibility: userData.verified ? "unset" : "hidden" }}
+      >
         <div
           className="search"
           style={{
             left:
               location.pathname !== "/dashboard/Home" &&
-                location.pathname !== "/dashboard/Wallet"
+              location.pathname !== "/dashboard/Wallet"
                 ? 500
                 : "calc(500px - 24px)",
           }}
         >
           <TextField
             id="input-with-icon-textfield"
-            placeholder={`Search ${location.pathname === "/dashboard/Wallet" ? "Assets" : "Home"
-              }`}
+            placeholder={`Search ${
+              location.pathname === "/dashboard/Wallet" ? "Assets" : "Home"
+            }`}
             className="searchInput"
             InputProps={{
               startAdornment: (
@@ -92,11 +96,12 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
           <div
             className={`item three 
             
-            ${location.pathname !== "/dashboard/Home" &&
-                location.pathname !== "/dashboard/Wallet"
+            ${
+              location.pathname !== "/dashboard/Home" &&
+              location.pathname !== "/dashboard/Wallet"
                 ? "margin"
                 : ""
-              }
+            }
             
             `}
             style={{
@@ -109,11 +114,18 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
             <div className="last">
               <div className="last_inner">
                 <div className="lastItem">
-                  <img src={Cat_Bg}></img>
+                  <img
+                    src={userData.discord_avatar}
+                    style={{
+                      height: "48px",
+                      width: "48px",
+                      borderRadius: "50%",
+                    }}
+                  ></img>
                 </div>
                 <div className="lastItem">
                   <label className="HeadingMain">
-                    0u345..67
+                    {userData.username}
                     <br></br>
                     <span className="welcopmeInfo">
                       {" "}
@@ -130,7 +142,10 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }: NavbarProps) => {
                   <img src={Switch}></img>
                 </span>
                 <span className="lastItemIteem">
-                  <img src={Logout}></img>
+                  <img
+                    src={Logout}
+                    onClick={() => window.location.replace("/auth/logout")}
+                  ></img>
                 </span>
               </div>
             </div>

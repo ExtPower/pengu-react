@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-
+import { useSelector } from 'react-redux'
 import {
   WalletProfile,
   ClearAll,
@@ -15,6 +15,7 @@ import {
 } from "../../../src/assets/index";
 function FeedTopbar() {
   const location = useLocation();
+  const userData = useSelector((state) => state.userData)
   var isTaskDetailPage = location.pathname !== "/dashboard/createTask" && location.pathname.indexOf("/dashboard/editTask") == -1
   return (
     <div>
@@ -52,27 +53,15 @@ function FeedTopbar() {
           )}
         </div>
         <div className="topfeedtask">
-          <div className="taskItem">
-            <img src={WalletProfile}></img>
-            <span className="backkintel">
-              <img src={NtfsBack} />
-            </span>
-            <label>bffopens</label>
-          </div>
-          <div className="taskItem">
-            <img src={WalletProfile2}></img>
-            <span className="backkintel">
-              <img src={Twitterbg} />
-            </span>
-            <label>bffopens</label>
-          </div>
-          <div className="taskItem" style={{ marginRight: 30 }}>
-            <img src={Profileblack}></img>
-            <span className="backkintel">
-              <img src={Scenebg} />
-            </span>
-            <label>bffopens</label>
-          </div>
+          {userData.twitterAcc.twitter_id != null &&
+            <div className="taskItem">
+              <img src={userData.twitterAcc.profile_picutre}></img>
+              <span className="backkintel">
+                <img src={Twitterbg} />
+              </span>
+              <label>{userData.twitterAcc.display_name}</label>
+            </div>
+          }
         </div>
       </div>
     </div>

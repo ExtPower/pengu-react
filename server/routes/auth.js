@@ -9,8 +9,9 @@ router.use("/twitter", twitter)
 
 
 router.get('/logout', checkAuth, (req, res) => {
-    req.logout();
-    res.redirect('/');
+    req.logout(function () {
+        res.redirect('/');
+    });
 });
 
 

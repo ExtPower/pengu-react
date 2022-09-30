@@ -130,7 +130,7 @@ function Testtable() {
                       )
                     }
                   })}
-                  <td>
+                  {/* <td>
                     <div className="porfoliaMnitr">
                       <div className="upermonitr">
                         <div className="feedPostAuthorContainer">
@@ -148,10 +148,6 @@ function Testtable() {
                           <img src={Options}></img>
                         </span>
                       </div>
-                      {/* <div className="mntiimag">
-                      <img src={MonitrImage}>
-                      </img>
-                  </div> */}
                       <div className="downmonitr">
                         <img src={Twitss}></img>
                         <span className="comments">
@@ -196,7 +192,7 @@ function Testtable() {
                         </span>
                       </div>
                     </div>
-                  </td>
+                  </td> */}
                 </div>
               </div>
 

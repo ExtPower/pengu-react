@@ -9,12 +9,13 @@ import {
   Twitterbg,
   Profileblack,
   Scenebg,
-} from "../../../src/assets/index";
+} from "../../assets/index";
 import "./settings.css";
 import { styled } from "@mui/material/styles";
 import MuiSwitch from "@mui/material/Switch";
 import CheckUpdates from "../Home/TopColleections/CheeckUpdate";
 
+import { useSelector } from "react-redux";
 const Toggle = styled((props) => (
   <MuiSwitch
     focusVisibleClassName=".Mui-focusVisible"
@@ -72,44 +73,65 @@ const Toggle = styled((props) => (
     }),
   },
 }));
-
 function Settings() {
+  const userData = useSelector((state) => state.userData);
   return (
     <div>
       <div className="mainSettings">
         <h5>Twitter</h5>
         <div className="flexSettings">
-          <div className="taskItem">
-            <img src={WalletProfile2}></img>
-            <span className="backkintel">
-              <img src={Twitterbg} />
-            </span>
-            <label>bffopens</label>
-          </div>
-          <div className="settingsbtn">
-            <button>
-              <img src={Switch}></img>
-            </button>
-            <button>
-              <img src={Logout_gray}></img>
-            </button>
-          </div>
+          {userData.twitterAcc.twitter_id == null ? (
+            <div className="taskItem">
+              <button
+                class="sendMessage"
+                onClick={() => window.location.replace("/auth/twitter")}
+              >
+                Log in
+              </button>
+            </div>
+          ) : (
+            <div className="taskItem">
+              <img src={userData.twitterAcc.profile_picutre}></img>
+              <span className="backkintel">
+                <img src={Twitterbg} />
+              </span>
+              <label>{userData.twitterAcc.display_name}</label>
+            </div>
+          )}
+          {userData.twitterAcc.twitter_id != null && (
+            <div className="settingsbtn">
+              <button>
+                <img src={Switch}></img>
+              </button>
+              <button>
+                <img
+                  src={Logout_gray}
+                  onClick={() =>
+                    window.location.replace("/auth/twitter/logout")
+                  }
+                ></img>
+              </button>
+            </div>
+          )}
         </div>
         <h5>Discord</h5>
         <div className="flexSettings">
           <div className="taskItem">
-            <img src={Profileblack}></img>
+            <img src={userData.discord_avatar}></img>
             <span className="backkintel">
               <img src={Scenebg} />
             </span>
-            <label>bffopens</label>
+            <label>{userData.username}</label>
           </div>
           <div className="settingsbtn">
             <button>
               <img src={Switch}></img>
             </button>
             <button>
-              <img src={Logout_gray}></img>
+              <img
+                src={Logout_gray}
+                onClick={() => window.location.replace("/auth/logout")}
+              ></img>
             </button>
           </div>
         </div>
