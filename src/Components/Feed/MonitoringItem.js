@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 const MonitoringItem = ({ icon, name, isVerified, letter, monitorItemId, type }) => {
   const socket = useSelector((state) => state.socket)
   const location = useLocation();
-  const taskId = location.pathname.split("/")[3] || null;
+  const taskId = location.pathname.split("/editTask/")[1] || null;
 
   function removeTask() {
     socket.emit('delete-monitored-item', { taskId, monitoredId: monitorItemId, type })

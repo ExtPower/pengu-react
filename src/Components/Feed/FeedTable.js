@@ -1,96 +1,18 @@
-import React from 'react'
-import {
-   FeedPoint,
-   FeedSettings
-    
-  } from "../../../src/assets/index";
-
+import React, { } from "react";
+import { useSelector } from 'react-redux'
+import TableTaskItem from "./TableTaskItem";
 function FeedTable() {
+  const tasks = useSelector((state) => state.userData.tasks)
   return (
-    <div>
-        <div className='tableFeed'>
-            <div className='tbleHead'>
-                <div className='headitem'>
-                    <div className='heaasind'>
-                        <h4>
-                        Portfolio Monitor
-                        </h4>
-                        <label>
-                        10 Alerts in the last hour
-
-                        </label>
-                    </div>
-                    <div className='headButns'>
-                    <img src={FeedPoint}>
-
-                    </img>
-                    <img src={FeedSettings}>
-                        
-                    </img>
-                </div>
-                </div>
-                <div className='headitem'>
-                    <div className='heaasind'>
-                        <h4>
-                        Portfolio Monitor
-                        </h4>
-                        <label>
-                        10 Alerts in the last hour
-
-                        </label>
-                    </div>
-                    <div className='headButns'>
-                    <img src={FeedPoint}>
-
-                    </img>
-                    <img src={FeedSettings}>
-                        
-                    </img>
-                </div>
-                </div>
-                <div className='headitem'>
-                    <div className='heaasind'>
-                        <h4>
-                        Portfolio Monitor
-                        </h4>
-                        <label>
-                        10 Alerts in the last hour
-
-                        </label>
-                    </div>
-                    <div className='headButns'>
-                    <img src={FeedPoint}>
-
-                    </img>
-                    <img src={FeedSettings}>
-                        
-                    </img>
-                </div>
-                </div>
-                <div className='headitem'>
-                    <div className='heaasind'>
-                        <h4>
-                        Portfolio Monitor
-                        </h4>
-                        <label>
-                        10 Alerts in the last hour
-
-                        </label>
-                    </div>
-                    <div className='headButns'>
-                    <img src={FeedPoint}>
-
-                    </img>
-                    <img src={FeedSettings}>
-                        
-                    </img>
-                </div>
-                </div>
-               
-            </div>
-        </div>
+    <div className="tableFeed">
+      <div className="tableFeedHorizontalScroll">
+        {
+          tasks &&
+          tasks.map((task) => <TableTaskItem task={task} />)
+        }
+      </div>
     </div>
-  )
+  );
 }
 
-export default FeedTable
+export default FeedTable;

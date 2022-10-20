@@ -13,10 +13,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" exact element={<Login />} />
+        <Route path="/login" exact element={<Login />} />
 
-        <Route path="/dashboard" element={<DashBoard />}>
-          <Route path="" element={<Navigate to="/dashboard/home" />} />
+        <Route path="/" element={<DashBoard />}>
+          <Route path="" element={<Navigate to="/home" />} />
           <Route path="Home" element={<Home />} />
           <Route path="feed" element={<Feed />} />
           <Route path="wallet" element={<Wallet />} />

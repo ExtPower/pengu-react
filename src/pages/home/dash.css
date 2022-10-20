@@ -29,7 +29,6 @@ header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4.MuiAppBar-root.MuiAp
   padding: 2px 12px;
   border-radius: 7px;
   width: 100%;
-  position: absolute;
   max-width: 450px;
 }
 @media screen and (max-width: 1450px) {

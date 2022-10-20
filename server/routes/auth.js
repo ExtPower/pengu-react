@@ -10,7 +10,7 @@ router.use("/twitter", twitter)
 
 router.get('/logout', checkAuth, (req, res) => {
     req.logout(function () {
-        res.redirect('/');
+        res.redirect('https://www.penguplatform.com/');
     });
 });
 

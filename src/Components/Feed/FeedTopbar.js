@@ -16,7 +16,7 @@ import {
 function FeedTopbar() {
   const location = useLocation();
   const userData = useSelector((state) => state.userData)
-  var isTaskDetailPage = location.pathname !== "/dashboard/createTask" && location.pathname.indexOf("/dashboard/editTask") == -1
+  var isTaskDetailPage = location.pathname !== "/createTask" && location.pathname.indexOf("/editTask") == -1
   return (
     <div>
       <div className="topbarFeed">
@@ -24,8 +24,8 @@ function FeedTopbar() {
           <Link
             to={
               isTaskDetailPage
-                ? "/dashboard/createTask"
-                : "/dashboard/Feed"
+                ? "/createTask"
+                : "/Feed"
             }
           >
             <div className="wallet innnfle eywhite">

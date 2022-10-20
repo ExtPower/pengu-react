@@ -2,6 +2,7 @@ import React from "react";
 import DiscordIcon from "../../assets/discordIcon.png";
 import DiscordBackground from "../../assets/discordBackground.webp";
 import "./login.css";
+var isDev___ = true;
 export default function Login() {
   return (
     <div className="loginSection">
@@ -11,7 +12,13 @@ export default function Login() {
           <img src={DiscordIcon} className="discord_icon" alt="" />
           <h3>Welcome to Penguplatform!</h3>
           <p>Login with discord</p>
-          <a href="http://penguplatform.com/auth/discord">Login</a>
+          <a
+            href={`http://${
+              isDev___ ? "localhost:3000" : "dashboard.penguplatform.com"
+            }/auth/discord`}
+          >
+            Login
+          </a>
         </form>
       </section>
     </div>

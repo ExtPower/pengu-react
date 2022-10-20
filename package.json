@@ -40,7 +40,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "copy": "node ./scripts/watch.js",
-    "build:dev": "npm run build && npm run copy",
+    "build:dev": "dotenv -e .env.development react-scripts build && npm run copy",
     "watch": "cra-build-watch"
   },
   "eslintConfig": {

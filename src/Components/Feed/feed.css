@@ -177,7 +177,7 @@ span.backkintel {
   justify-content: flex-start;
   transform: translateX(-24px);
   width: calc(100% + 24px);
-  height: calc(100% - 220px);
+  height: 100%;
   overflow: hidden;
 }
 

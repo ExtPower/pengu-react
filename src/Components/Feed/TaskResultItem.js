@@ -1,32 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  FeedPoint,
-  FeedSettings,
   Options,
-  WalletProfile,
-  MonitrImage,
-  LoveLike,
-  Share,
-  Comments,
-  Twitss,
-  Balancee,
-  lets_get,
   Discord_gray,
-  Feed_image_1,
-  Feed_image_2,
-  Feed_image_3,
-  Gary_vee,
-  Vee_friends,
-  Bayc,
-  Bayc_image,
-  Verified_icon,
-} from "../../../src/assets/index";
-import { useSelector } from 'react-redux'
-import { useNavigate, useLocation } from 'react-router-dom';
-function Testtable() {
-  const tasks = useSelector((state) => state.userData.tasks)
-  const navigate = useNavigate()
-  function timeDifference(current = new Date(new Date().toLocaleString("en-US", { timeZone: "GMT" })), previous) {
+} from "../../assets/index";
+function TaskResultItem({ result }) {
+  const [timeAgo, setTimeAgo] = useState(timeDifference(undefined, result.created_time_stamp))
+  function timeDifference(current = new Date().toLocaleString("en-US", { timeZone: "GMT" }), previous) {
 
     var msPerMinute = 60 * 1000;
     var msPerHour = msPerMinute * 60;
@@ -34,7 +13,7 @@ function Testtable() {
     var msPerMonth = msPerDay * 30;
     var msPerYear = msPerDay * 365;
 
-    var elapsed = new Date(current).getTime() - new Date(previous).getTime();
+    var elapsed = new Date(current).getTime() - new Date(previous.split(".")[0]).getTime();
 
     if (elapsed < msPerMinute) {
       return `${Math.round(elapsed / 1000) == 1 ? "a" : Math.round(elapsed / 1000)} second${Math.round(elapsed / 1000) > 1 ? "s" : ""} ago`;
@@ -63,74 +42,63 @@ function Testtable() {
       return `${Math.round(elapsed / msPerYear) == 1 ? "a" : Math.round(elapsed / msPerYear)} year${Math.round(elapsed / msPerYear) > 1 ? "s" : ""} ago`;
     }
   }
-  function openSettings(taskId) {
-    navigate(`/dashboard/editTask/${taskId}`)
-  }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeAgo(timeDifference(undefined, result.created_time_stamp))
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeDifference, setTimeAgo, result])
   return (
-    <div className="tableFeed">
-      <div className="tableFeedHorizontalScroll">
-        {
-          tasks &&
-          tasks.map((task) => {
-            return (
-              <div className="tableColumn">
-                <div className="headitem">
-                  <div className="heaasind">
-                    <h4>{task.name}</h4>
-                    <label>10 Alerts in the last hour</label>
-                  </div>
-                  <div className="headButns">
-                    <img src={FeedPoint}></img>
-                    <img src={FeedSettings} onClick={() => openSettings(task.task_id)}></img>
-                  </div>
+    <td>
+      {
+        result.type == "discord" &&
+        <div className="porfoliaMnitr">
+          <div className="feedPostAuthorContainer">
+            <div className="upermonitr">
+              <span className="mntiproo">
+                <img src={result.discord_user_avatar}></img>
+              </span>
+              <span className="postInfoContainer">
+                <label>{result.discord_user_tag}</label>
+                <p style={{ minHeight: "20px" }}>
+                  {result.msg_content}
+                </p>
+              </span>
+            </div>
+            <span className="opption">
+              <a href={result.msg_url} target="_blank">
+                <img src={Options} />
+              </a>
+            </span>
+          </div>
+          {result.attachements.map((attachement) => {
+            if (attachement.height != "null") {
+              return (
+                <div className="mntiimag" style={{ maxWidth: "337px", maxHeight: "400px" }}>
+                  <img src={attachement.attachement_url} style={{ maxHeight: "inherit", maxWidth: "inherit", width: "unset", height: "unset", borderRadius: "10px" }} onClick={({ target }) => window.open(target.src)} ></img>
                 </div>
-                <div className="tableContentColumn">
-                  {task.results.map((result) => {
-                    if (result.type == "discord") {
-                      return (
-                        <td>
-                          <div className="porfoliaMnitr">
-                            <div className="feedPostAuthorContainer">
-                              <div className="upermonitr">
-                                <span className="mntiproo">
-                                  <img src={result.discord_user_avatar}></img>
-                                </span>
-                                <span className="postInfoContainer">
-                                  <label>{result.discord_user_tag}</label>
-                                  <p>
-                                    {result.msg_content}
-                                  </p>
-                                </span>
-                              </div>
-                              <span className="opption">
-                                <a href={result.msg_url}>
-                                  <img src={Options} />
-                                </a>
-                              </span>
-                            </div>
-                            {result.attachements.map((attachement) => {
-                              if (attachement.height != "null") {
-                                return (
-                                  <div className="mntiimag" style={{ maxWidth: "337px", maxHeight: "400px" }}>
-                                    <img src={attachement.attachement_url} style={{ maxHeight: "inherit", maxWidth: "inherit", width: "unset", height: "unset" }} onClick={({ target }) => window.open(target.src)} ></img>
-                                  </div>
 
-                                )
+              )
 
-                              }
-                            })}
+            }
+          })}
 
-                            <div className="downmonitr">
-                              <img src={Discord_gray}></img>
-                              {/* <a href="#">boredapeyachtclub.com</a> */}
-                              <span>{timeDifference(undefined, result.created_time_stamp)}</span>
-                            </div>
-                          </div>
-                        </td>
-                      )
-                    }
-                  })}
-                  {/* <td>
+          <div className="downmonitr">
+            <img src={Discord_gray}></img>
+            {/* <a href="#">boredapeyachtclub.com</a> */}
+            <span>{timeAgo}</span>
+          </div>
+        </div>
+
+      }
+    </td>
+
+  );
+}
+
+export default TaskResultItem;
+
+/* <td>
                     <div className="porfoliaMnitr">
                       <div className="upermonitr">
                         <div className="feedPostAuthorContainer">
@@ -192,16 +160,4 @@ function Testtable() {
                         </span>
                       </div>
                     </div>
-                  </td> */}
-                </div>
-              </div>
-
-            )
-          })
-        }
-      </div>
-    </div>
-  );
-}
-
-export default Testtable;
+                  </td> */

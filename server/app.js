@@ -6,6 +6,7 @@ const Store = require('./modules/Store.js');
 const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth } = require('./modules/functions.js');
 const app = express();
 const Twit = require("twit")
+var isDev___ = true
 
 const session = require('express-session');
 const passport = require('passport');
@@ -62,7 +63,7 @@ passport.use(new TwitterStrategy({
                     }
                 } else {
                     console.log("User does not exist");
-                    await PromisifiedQuery(`INSERT INTO twitter_account(user_id, twitter_id, username, display_name, profile_picutre, token, tokenSecret)
+                    await PromisifiedQuery(`INSERT IGNORE INTO twitter_account(user_id, twitter_id, username, display_name, profile_picutre, token, tokenSecret)
                         VALUES 
                     (
                         "${_escpe(user.user_id)}",
@@ -112,7 +113,7 @@ const bot = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildPresences
+        GatewayIntentBits.GuildPresences,
 
         // ...
     ],
@@ -141,7 +142,43 @@ bot.on('guildUpdate', async (guildOld, guildNew) => {
     changeSupportedServers()
 });
 
+bot.on("guildMemberAdd", async (member) => {
+    updateUsernamesMessagesDiscord(member.user)
+
+})
+bot.on("userUpdate", async (userOld, userNew) => {
+    updateUsernamesMessagesDiscord(userNew)
+
+})
+
+bot.on("guildMemberUpdate", async (memberOld, memberNew) => {
+    updateUsernamesMessagesDiscord(memberNew.user)
+
+
+})
+function padTo2Digits(num) {
+    return num.toString().padStart(2, '0');
+}
+
+function formatDate(date) {
+    return (
+        [
+            date.getFullYear(),
+            padTo2Digits(date.getMonth() + 1),
+            padTo2Digits(date.getDate()),
+        ].join('-') +
+        ' ' +
+        [
+            padTo2Digits(date.getHours()),
+            padTo2Digits(date.getMinutes()),
+            padTo2Digits(date.getSeconds()),
+        ].join(':')
+    );
+}
+
 function createMessage(message) {
+    updateUsernamesMessagesDiscord(message.author)
+
     return new Promise((resolve, reject) => {
         if (!message.system) {
 
@@ -151,14 +188,14 @@ function createMessage(message) {
             var channelId = message.channelId
             var guildId = message.guildId
             var authorId = author.id
-            var authorAvatar = author.avatar == null ? `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png` : author.defaultAvatarURL
+            var authorAvatar = author.avatar != null ? `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png` : author.defaultAvatarURL
             var authorName = author.tag
             var msgContent = message.content
             var msgUrl = message.url
             var msgAttachements = [...message.attachments].map(e => e[1])
             var msgCreatedTimestamp = message.createdTimestamp
             var promises = []
-            promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_found (
+            promises.push(PromisifiedQuery(`INSERT IGNORE INTO discord_msgs_found (
                 discord_msg_id,
                 msg_id,
                 msg_channel_id,
@@ -167,7 +204,8 @@ function createMessage(message) {
                 discord_user_avatar,
                 discord_user_tag,
                 msg_content,
-                msg_url
+                msg_url,
+                created_time_stamp
             ) VALUES (
                 "${_escpe(msgDiscordId)}",
                 "${_escpe(msgId)}",
@@ -177,11 +215,12 @@ function createMessage(message) {
                 "${_escpe(authorAvatar)}",
                 "${_escpe(authorName)}",
                 "${_escpe(msgContent)}",
-                "${_escpe(msgUrl)}"
+                "${_escpe(msgUrl)}",
+                "${_escpe(formatDate(new Date(new Date().toLocaleString("en-US", { timeZone: "GMT" }))))}"
             )`))
             for (let i = 0; i < msgAttachements.length; i++) {
                 const msgAttachement = msgAttachements[i];
-                promises.push(PromisifiedQuery(`INSERT INTO discord_msgs_attachements (
+                promises.push(PromisifiedQuery(`INSERT IGNORE INTO discord_msgs_attachements (
                     msg_id,
                     attachement_url,
                     width,
@@ -228,7 +267,16 @@ bot.on('messageCreate', async (message) => {
         io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageCreate" })
     })
 });
+function updateUsernamesMessagesDiscord(user) {
+    var userId = user.id
+    var userTag = user.tag
+    var userAvatar = user.avatar != null ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png` : user.defaultAvatarURL
+    PromisifiedQuery(`UPDATE discord_msgs_found SET discord_user_avatar="${_escpe(userAvatar)}",discord_user_tag="${_escpe(userTag)}" WHERE discord_user_id="${_escpe(userId)}" AND (discord_user_avatar != "${_escpe(userAvatar)}" OR discord_user_tag != "${_escpe(userTag)}")`)
+    PromisifiedQuery(`UPDATE users SET discord_avatar="${_escpe(userAvatar)}",username="${_escpe(userTag)}" WHERE discord_id="${_escpe(userId)}" AND (discord_avatar != "${_escpe(userAvatar)}" OR username != "${_escpe(userTag)}")`)
+
+}
 function deleteMessage(message) {
+    updateUsernamesMessagesDiscord(message.author)
     return new Promise(async (resolve, reject) => {
         var msgDiscordId = message.id
         var channelId = message.channelId
@@ -311,7 +359,7 @@ passport.use(
                 } else {
                     var userId = uuid()
                     console.log("User does not exist");
-                    await PromisifiedQuery(`INSERT INTO users(user_id, username, discord_avatar, email, discord_id)
+                    await PromisifiedQuery(`INSERT IGNORE INTO users(user_id, username, discord_avatar, email, discord_id)
                         VALUES 
                     (
                         "${_escpe(userId)}",
@@ -377,12 +425,9 @@ app.use(passport.session());
 
 app.use('/auth', authRoute);
 app.get("/login", checkNotAuth, function (req, res) {
-    res.redirect("/")
-})
-app.get("/", checkNotAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'static/website.html'));
 })
-app.get("/dashboard*", checkAuth, function (req, res) {
+app.get("/*", checkAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'static/website.html'));
 })
 
@@ -407,6 +452,8 @@ io.use((socket, next) => {
     }
 });
 
+
+
 io.on("connection", async (socket) => {
     const userId = socket.request.session.passport.user || null
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
@@ -415,6 +462,15 @@ io.on("connection", async (socket) => {
     userData.verified = true
     if (Store.verifiedUsers.filter(e => e == userData.discord_id).length == 0) {
         userData.verified = false
+    }
+    if (userData.twitterAcc.twitter_id != null) {
+        var T = new Twit({
+            consumer_key: process.env.TWITTER_CONSUMER_KEY,
+            consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+            access_token: userData.twitterAcc.token,
+            access_token_secret: userData.twitterAcc.tokenSecret,
+        })
+
     }
     socket.emit("connected")
     var { tasks } = userData
@@ -472,7 +528,7 @@ io.on("connection", async (socket) => {
         var discordTasks = data.discord || []
         var openseaTasks = data.opensea || []
         var promises = []
-        promises.push(await PromisifiedQuery(`INSERT INTO tasks (user_id, task_id, name, type) 
+        promises.push(await PromisifiedQuery(`INSERT IGNORE INTO tasks (user_id, task_id, name, type) 
         VALUES 
         (
             "${_escpe(userId)}",
@@ -486,7 +542,7 @@ io.on("connection", async (socket) => {
             var { handle, retweets, quote_tweets } = twitterTask
             var type_twitter = twitterTask.type
             var monitoredId = uuid()
-            promises.push(PromisifiedQuery(`INSERT INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
+            promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -504,7 +560,7 @@ io.on("connection", async (socket) => {
             var { channel_id, guild_id } = discordTask
             var server_details = supportedServers.filter(e => e.id == guild_id)[0] || {}
             var monitoredId = uuid()
-            promises.push(PromisifiedQuery(`INSERT INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id) 
+            promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -520,7 +576,7 @@ io.on("connection", async (socket) => {
             var { collection_name } = openseaTask
             var type_opensea = openseaTask.type
             var monitoredId = uuid()
-            promises.push(PromisifiedQuery(`INSERT INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
+            promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -537,6 +593,15 @@ io.on("connection", async (socket) => {
             socket.emit("task-created", taskId)
             userData = userData1
         })
+    })
+    socket.on("change-task-name", async (action) => {
+        var taskId = action.taskId
+        await PromisifiedQuery(`UPDATE tasks SET name="${_escpe(action.taskName)}" WHERE task_id="${_escpe(taskId)}"`)
+        getData(userData).then((userData1) => {
+            socket.emit("userData-changed", { reason: "change-task-name", data: userData1 })
+            userData = userData1
+        })
+
     })
     socket.on("delete-task", async (action) => {
         var taskId = action.taskId
@@ -579,10 +644,11 @@ io.on("connection", async (socket) => {
         var taskId = action.task_id
         var type = action.type
         var data = action.data
+        var allSockets = [...io.sockets.adapter.rooms].map(item => item[0])
         if (type == "twitter") {
             var { handle, retweets, quote_tweets } = data
             var type_twitter = data.type
-            await PromisifiedQuery(`INSERT INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
+            await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -597,7 +663,7 @@ io.on("connection", async (socket) => {
             var { guild_id, channel_id } = data
 
             var server_details = supportedServers.filter(e => e.id == data.guild_id)[0] || {}
-            await PromisifiedQuery(`INSERT INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id ) 
+            await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id ) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -609,7 +675,7 @@ io.on("connection", async (socket) => {
         } else if (type == "opensea") {
             var { collection_name } = data
             var type_opensea = data.type
-            await PromisifiedQuery(`INSERT INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
+            await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -688,4 +754,4 @@ function setInitialStoreValues() {
 instrument(io, {
     auth: false
 });
-httpServer.listen(80);
+httpServer.listen(isDev___ ? 3000 : 80);

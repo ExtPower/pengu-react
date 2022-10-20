@@ -9,6 +9,7 @@ import {
   Opensea_button_grey,
   Down_arrow_black,
   Down_arrow_gray,
+  CheckMark,
 } from "../../assets";
 import { useSelector, useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -26,9 +27,9 @@ function MonitoringTask() {
   const userData = useSelector((state) => state.userData);
   const location = useLocation();
   const navigate = useNavigate();
-  const isNewTask = location.pathname == "/dashboard/createTask";
+  const isNewTask = location.pathname == "/createTask";
   const isLoggedIn = userData.user_id != null;
-  const taskId = location.pathname.split("/")[3] || null;
+  const taskId = location.pathname.split("/editTask/")[1] || null;
   const supportedServers = useSelector((state) => state.supportedServers);
   const socket = useSelector((state) => state.socket);
   const [taskData, setTaskData] = useState({});
@@ -40,24 +41,26 @@ function MonitoringTask() {
   const [monitoredItemsOpenSea, setmMonitoredItemsOpenSea] = useState([]);
 
   const [taskName, setTaskName] = useState("");
+  const [taskNameOriginal, setTaskNameOriginal] = useState("");
   // twitter
   const [typeOfTaskTwitter, setTypeOfTaskTwitter] = useState("tweets");
   const [twitterHandle, setTwitterHandle] = useState("");
   const [includeRetweets, setIncludeRetweets] = useState(false);
   const [includeQuoteTweets, setIncludeQuoteTweets] = useState(false);
   useEffect(() => {
-    if (isLoggedIn && !isNewTask) {
+    if (isLoggedIn && !isNewTask && taskId != null) {
       var taskData = userData?.tasks?.filter(
         (e) => e.task_id == taskId
       )?.[0] || {
         task_id: null,
       };
       if (taskData.task_id == null) {
-        navigate("/dashboard/createTask");
+        navigate("/createTask");
         return;
       }
       setTaskData(taskData);
       setTaskName(taskData.name);
+      setTaskNameOriginal(taskData.name);
       setMonitoredItemsTwitter(taskData.monitoredItems.twitter);
       setMonitoredItemsDiscord(taskData.monitoredItems.discord);
       setmMonitoredItemsOpenSea(taskData.monitoredItems.opensea);
@@ -96,7 +99,10 @@ function MonitoringTask() {
   function twitterMonitorType(event) {
     setTypeOfTaskTwitter(event.target.getAttribute("data-value"));
   }
-
+  function changeTaskName() {
+    socket.emit("change-task-name", { taskId, taskName });
+    setTaskNameOriginal(taskName);
+  }
   // discord
   const [selectedServerIndex, setSelectedServerIndex] = useState(0);
   const [selectedChannelIndex, setSelectedChannelIndex] = useState(0);
@@ -165,7 +171,7 @@ function MonitoringTask() {
     }
     var data = {};
     var ogData = [];
-    var setFnc = function () { };
+    var setFnc = function () {};
     var isDub = false;
     if (type == "twitter") {
       data = { ...taskTwitterDetails, type: typeOfTaskTwitter };
@@ -204,10 +210,16 @@ function MonitoringTask() {
       discord: monitoredItemsDiscord,
       opensea: monitoredItemsOpenSea,
     };
-    socket.emit("create-task", { data, name });
+    if (name.trim() != "") {
+      setTaskNameOriginal(taskName);
+      socket.emit("create-task", { data, name });
+    } else {
+      alert("Please set a name");
+    }
   }
   function deleteTask() {
     socket.emit("delete-task", { taskId });
+    navigate("/feed");
   }
   return (
     <div>
@@ -222,16 +234,34 @@ function MonitoringTask() {
         >
           <h4>Create Task</h4>
           <h5>Name</h5>
-          <input
-            type="text"
-            className="search task"
-            placeholder="Task Name"
-            required="true"
-            value={taskName}
-            onInput={(event) => {
-              setTaskName(event.target.value, []);
-            }}
-          />
+          <div style={{ position: "absolute", display: "flex", gap: 10 }}>
+            <input
+              type="text"
+              className="search task"
+              placeholder="Task Name"
+              required="true"
+              value={taskName}
+              onInput={(event) => {
+                setTaskName(event.target.value, []);
+              }}
+            />
+            {taskName != taskNameOriginal && !isNewTask && (
+              <div
+                onClick={changeTaskName}
+                style={{
+                  backgroundColor: "rgb(122, 101, 251)",
+                  width: 42,
+                  height: 42,
+                  display: "flex",
+                  borderRadius: 4,
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <img src={CheckMark} style={{ width: 20 }} alt="" />
+              </div>
+            )}
+          </div>
           <div className="taskflex">
             <div className="itemtTask">
               <h5>Twitter Monitor</h5>
@@ -239,8 +269,9 @@ function MonitoringTask() {
               <div className="btnsstask">
                 <label
                   for="tweets"
-                  className={`btntask ${typeOfTaskTwitter == "tweets" ? "activeTask" : ""
-                    }`}
+                  className={`btntask ${
+                    typeOfTaskTwitter == "tweets" ? "activeTask" : ""
+                  }`}
                 >
                   <input
                     name="typeOfTaskTwitter"
@@ -255,8 +286,9 @@ function MonitoringTask() {
                 </label>
                 <label
                   for="all_activity"
-                  className={`btntask ${typeOfTaskTwitter == "all_activity" ? "activeTask" : ""
-                    }`}
+                  className={`btntask ${
+                    typeOfTaskTwitter == "all_activity" ? "activeTask" : ""
+                  }`}
                 >
                   <input
                     name="typeOfTaskTwitter"
@@ -332,8 +364,9 @@ function MonitoringTask() {
               <div className="btnsstask">
                 <label
                   for="channel_messages"
-                  className={`btntask ${typeOfTaskDiscord == "channel_messages" ? "activeTask" : ""
-                    }`}
+                  className={`btntask ${
+                    typeOfTaskDiscord == "channel_messages" ? "activeTask" : ""
+                  }`}
                 >
                   <input
                     name="typeOfTaskTwitter"
@@ -389,8 +422,11 @@ function MonitoringTask() {
               <div className="btnsstask">
                 <label
                   for="collection_activity"
-                  className={`btntask ${typeOfTaskOpensea == "collection_activity" ? "activeTask" : ""
-                    }`}
+                  className={`btntask ${
+                    typeOfTaskOpensea == "collection_activity"
+                      ? "activeTask"
+                      : ""
+                  }`}
                 >
                   <input
                     name="typeOfTaskOpensea"
@@ -405,8 +441,9 @@ function MonitoringTask() {
                 </label>
                 <label
                   for="account_activity"
-                  className={`btntask ${typeOfTaskOpensea == "account_activity" ? "activeTask" : ""
-                    }`}
+                  className={`btntask ${
+                    typeOfTaskOpensea == "account_activity" ? "activeTask" : ""
+                  }`}
                 >
                   <input
                     name="typeOfTaskOpensea"
@@ -447,45 +484,70 @@ function MonitoringTask() {
             <div className="itemCurrent">
               <img src={Twiter} className="itemCurrentSocialIcon"></img>
               <div className="itemCurrents">
-                {monitoredItemsTwitter && monitoredItemsTwitter.map((monitoredItem, index) => {
-                  return (
-                    <MonitoringItem icon={monitoredItem.icon} letter={monitoredItem.letter} isVerified={monitoredItem.isVerified} name={monitoredItem.name} monitorItemId={monitoredItem.monitored_id} type="twitter" />
-                  )
-                })}
-
+                {monitoredItemsTwitter &&
+                  monitoredItemsTwitter.map((monitoredItem, index) => {
+                    return (
+                      <MonitoringItem
+                        icon={monitoredItem.icon}
+                        letter={monitoredItem.letter}
+                        isVerified={monitoredItem.isVerified}
+                        name={monitoredItem.name}
+                        monitorItemId={monitoredItem.monitored_id}
+                        type="twitter"
+                      />
+                    );
+                  })}
               </div>
             </div>
             <div className="itemCurrent">
               <img src={Discord_gray} className="itemCurrentSocialIcon"></img>
               <div className="itemCurrents">
-                {monitoredItemsDiscord && monitoredItemsDiscord.map((monitoredItem, index) => {
-                  var monitoredServer = supportedServers.filter(e => e.id == monitoredItem.guild_id)?.[0]
-                  if (monitoredServer) {
-                    var monitoredChannel = monitoredServer.channels.filter(e => e.id == monitoredItem.channel_id)?.[0]
-                    if (monitoredChannel) {
-                      return (
-                        <MonitoringItem icon={monitoredServer.icon} letter={monitoredServer.nameAcronym} isVerified={false} name={monitoredChannel.name} monitorItemId={monitoredItem.monitored_id} type="discord" />
-                      )
+                {monitoredItemsDiscord &&
+                  monitoredItemsDiscord.map((monitoredItem, index) => {
+                    var monitoredServer = supportedServers.filter(
+                      (e) => e.id == monitoredItem.guild_id
+                    )?.[0];
+                    if (monitoredServer) {
+                      var monitoredChannel = monitoredServer.channels.filter(
+                        (e) => e.id == monitoredItem.channel_id
+                      )?.[0];
+                      if (monitoredChannel) {
+                        return (
+                          <MonitoringItem
+                            icon={monitoredServer.icon}
+                            letter={monitoredServer.nameAcronym}
+                            isVerified={false}
+                            name={monitoredChannel.name}
+                            monitorItemId={monitoredItem.monitored_id}
+                            type="discord"
+                          />
+                        );
+                      }
                     }
-                  }
-                })}
+                  })}
               </div>
             </div>
             <div className="itemCurrent">
               <img src={Opensea_grey} className="itemCurrentSocialIcon"></img>
               <div className="itemCurrents">
-                {monitoredItemsOpenSea && monitoredItemsOpenSea.map((monitoredItem, index) => {
-                  return (
-                    <MonitoringItem icon={monitoredItem.icon} letter={monitoredItem.letter} isVerified={monitoredItem.isVerified} name={monitoredItem.name} monitorItemId={monitoredItem.monitored_id} type="opensea" />
-                  )
-                })}
-
+                {monitoredItemsOpenSea &&
+                  monitoredItemsOpenSea.map((monitoredItem, index) => {
+                    return (
+                      <MonitoringItem
+                        icon={monitoredItem.icon}
+                        letter={monitoredItem.letter}
+                        isVerified={monitoredItem.isVerified}
+                        name={monitoredItem.name}
+                        monitorItemId={monitoredItem.monitored_id}
+                        type="opensea"
+                      />
+                    );
+                  })}
               </div>
             </div>
           </div>
         </div>
       </div>
-
     </div>
   );
 }

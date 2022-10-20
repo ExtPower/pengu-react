@@ -116,8 +116,10 @@ import X_icon from "./images/x_icon.svg";
 import Down_arrow_black from "./images/down_arrow_black.svg";
 import Down_arrow_gray from "./images/down_arrow_gray.svg";
 import Loader from "./loader.gif"
+import CheckMark from "./images/checkmark.svg"
 export {
   Loader,
+  CheckMark,
   HomeeWhitee,
   TopPeenguu,
   SettingsWhite,

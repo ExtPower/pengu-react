@@ -146,6 +146,7 @@ const list = [
     after: SearchWhite,
   },
 ];
+var isDev___ = true;
 export default function DashBoard() {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -156,7 +157,7 @@ export default function DashBoard() {
   // const tasksChanges = useSelector((state) => state.tasksChanges);
   const navigate = useNavigate();
   useEffect(() => {
-    var pageName = location.pathname.split("/dashboard/")[1];
+    var pageName = location.pathname.slice(1);
     if (pageName && pageName.indexOf("/") != -1) {
       if (userData.user_id != null) {
         if (pageName.indexOf("editTask") != -1) {
@@ -164,6 +165,7 @@ export default function DashBoard() {
           pageName =
             userData.tasks?.filter((e) => e.task_id == taskId)?.[0]?.name ||
             null;
+        } else {
         }
       } else {
         pageName = "";
@@ -172,7 +174,9 @@ export default function DashBoard() {
     setComponenNamee(pageName);
   }, [userData, location]);
   useEffect(() => {
-    const socket = io("http://penguplatform.com");
+    const socket = io(
+      `http://${isDev___ ? "localhost:3000" : "dashboard.penguplatform.com"}`
+    );
     dispatch({ type: "change-data", name: "socket", value: socket });
     socket.on("connected", (data) => {
       socket.on("supported-servers-changed", (data) => {
@@ -217,7 +221,7 @@ export default function DashBoard() {
         });
       });
       socket.on("task-created", (action) => {
-        navigate(`/dashboard/editTask/${action}`);
+        navigate(`/editTask/${action}`);
       });
 
       socket.emit("get-supported-servers");
@@ -295,7 +299,7 @@ export default function DashBoard() {
                     disablePadding
                     sx={{ display: "block" }}
                   >
-                    <Link to={`/dashboard/${item.text[0]}`}>
+                    <Link to={`/${item.text[0]}`}>
                       {/* <Tooltip
                   title={item.text[0]}
                   placement="right-start"
@@ -336,8 +340,7 @@ export default function DashBoard() {
                           }}
                           className={
                             item.text.some(
-                              (text) =>
-                                `/dashboard/${text}` === location.pathname
+                              (text) => `/${text}` === location.pathname
                             )
                               ? "backlogg"
                               : ""
@@ -356,8 +359,7 @@ export default function DashBoard() {
                             <img
                               src={
                                 item.text.some(
-                                  (text) =>
-                                    `/dashboard/${text}` === location.pathname
+                                  (text) => `/${text}` === location.pathname
                                 )
                                   ? item.after
                                   : item.img
@@ -376,7 +378,7 @@ export default function DashBoard() {
               </List>
               {/* <Divider /> */}
               <List>
-                <Link to="/dashboard/Settings">
+                <Link to="/Settings">
                   <ListItem disablePadding sx={{ display: "block" }}>
                     <Tooltip
                       title="Settings"
@@ -395,7 +397,7 @@ export default function DashBoard() {
                     >
                       <ListItemButton
                         className={
-                          location.pathname == `/dashboard/Settings`
+                          location.pathname == `/Settings`
                             ? "backlogg"
                             : "seeetingss"
                         }
@@ -417,7 +419,7 @@ export default function DashBoard() {
                         >
                           <img
                             src={
-                              location.pathname == `/dashboard/Settings`
+                              location.pathname == `/Settings`
                                 ? SettingsWhite
                                 : Settings
                             }
@@ -481,16 +483,16 @@ export default function DashBoard() {
                 maxWidth: "calc(100% - 65px)",
               }}
             >
-              {location.pathname !== "/dashboard/Home" &&
-                location.pathname !== "/dashboard/Wallet" && <DrawerHeader />}
+              {location.pathname !== "/Home" &&
+                location.pathname !== "/Wallet" && <DrawerHeader />}
               <div
                 className="Main_content"
                 style={{
                   height:
-                    location.pathname === "/dashboard/Settings"
+                    location.pathname === "/Settings"
                       ? "unset"
-                      : location.pathname === "/dashboard/Home" ||
-                        location.pathname === "/dashboard/Wallet"
+                      : location.pathname === "/Home" ||
+                        location.pathname === "/Wallet"
                       ? "100%"
                       : "calc(100% - 64px)",
                 }}
