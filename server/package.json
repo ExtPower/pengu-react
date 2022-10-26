@@ -26,7 +26,8 @@
     "path": "^0.12.7",
     "socket.io": "^4.5.2",
     "socket.io-monitor": "^2.0.1",
-    "twit": "^2.2.11"
+    "twit": "^2.2.11",
+    "twitter-api-v2": "^1.12.9"
   },
   "devDependencies": {
     "@types/node": "^18.7.5"

@@ -5,7 +5,7 @@ const { instrument } = require("@socket.io/admin-ui");
 const Store = require('./modules/Store.js');
 const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth } = require('./modules/functions.js');
 const app = express();
-const Twit = require("twit")
+const { TwitterApi } = require('twitter-api-v2');
 var isDev___ = true
 
 const session = require('express-session');
@@ -453,7 +453,29 @@ io.use((socket, next) => {
 });
 
 
+function getAllTweets(userClient, options, callback = null, pagination = null, collectedTweets = []) {
+    var config = {
+        start_time: options.start_time,
+        max_results: 100,
+        expansions: ["attachments.media_keys", "author_id", "in_reply_to_user_id", "referenced_tweets.id", "referenced_tweets.id.author_id"],
+        "tweet.fields": ["attachments", "in_reply_to_user_id", "referenced_tweets", "text"],
+        "user.fields": ["verified"]
+    }
+    if (pagination) {
+        config.pagination_token = pagination
+    }
+    userClient.v2.userTimeline(options.user_id, config).then(timeline => {
+        if (timeline.meta.next_token) {
+            getAllTweets(userClient, options, callback, timeline.meta.next_token, [...collectedTweets, ...timeline.tweets])
+        } else {
+            if (callback) {
+                callback([...collectedTweets, ...timeline.tweets])
+            }
+        }
 
+    })
+
+}
 io.on("connection", async (socket) => {
     const userId = socket.request.session.passport.user || null
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
@@ -464,12 +486,17 @@ io.on("connection", async (socket) => {
         userData.verified = false
     }
     if (userData.twitterAcc.twitter_id != null) {
-        var T = new Twit({
-            consumer_key: process.env.TWITTER_CONSUMER_KEY,
-            consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
-            access_token: userData.twitterAcc.token,
-            access_token_secret: userData.twitterAcc.tokenSecret,
+        var userClient = new TwitterApi({
+            appKey: process.env.TWITTER_CONSUMER_KEY,
+            appSecret: process.env.TWITTER_CONSUMER_SECRET,
+            accessToken: userData.twitterAcc.token,
+            accessSecret: userData.twitterAcc.tokenSecret,
         })
+        userClient.v2.userByUsername('elonmusk', { "user.fields": ["verified"] }).then((user) => {
+            getAllTweets(userClient, { user_id: user.data.id, start_time: "2010-11-06T00:00:01Z" }, function (tweets) {
+                console.log(tweets);
+            })
+        });
 
     }
     socket.emit("connected")
@@ -495,6 +522,33 @@ io.on("connection", async (socket) => {
             continue
         }
         socket.join(`twitter_${twitterTask.handle}`)
+
+    }
+    if (monitoredItemsTwitter.length != 0 && userData.twitterAcc.twitter_id != null) {
+        var tasksWithDates = []
+        for (let i = 0; i < alreadyJoinedTwitter.length; i++) {
+            var twitterUserName = alreadyJoinedTwitter[i];
+            var tasksWithUserName = monitoredItemsTwitter.filter(e => e.handle == twitterUserName)
+            var oldestTask = tasksWithUserName.sort((a, b) => new Date(a.created_time_stamp).getTime() - new Date(b.created_time_stamp).getTime())[0]
+            var oldestDate = new Date(oldestTask.created_time_stamp).toISOString()
+            tasksWithDates.push({
+                handle: twitterUserName,
+                date: oldestDate
+            })
+        }
+        for (let i = 0; i < tasksWithDates.length; i++) {
+            const taskWithDates = tasksWithDates[i];
+            userClient.v2.usersByUsernames([taskWithDates.handle]).then((users) => {
+                userClient.v2.userTimeline(users.data[0].id, { start_time: taskWithDates.date, "tweet.fields": "created_at", max_results: 100 }).then(timeline => {
+                    console.log('====================================');
+                    console.log(timeline);
+                    console.log('====================================');
+                })
+            });
+
+
+        }
+
 
     }
     for (let i = 0; i < monitoredItemsDiscord.length; i++) {
