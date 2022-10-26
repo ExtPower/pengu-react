@@ -477,6 +477,7 @@ function getAllTweets(userClient, options, callback = null, pagination = null, c
 
 }
 io.on("connection", async (socket) => {
+    setInitialStoreValues()
     const userId = socket.request.session.passport.user || null
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
     var user = { user_id, email, username, discord_id, discord_avatar }
@@ -788,7 +789,7 @@ io.on("connection", async (socket) => {
 function setInitialStoreValues() {
     const Guilds = [...bot.guilds.cache].map(e => e[1])
     Store.supportedServers = Guilds.map(supportedServer => {
-        var nonCategoryChannel = [...supportedServer.channels.cache].map(e => e[1]).filter(e => e.constructor.name != "CategoryChannel")
+        var nonCategoryChannel = [...supportedServer.channels.cache].map(e => e[1]).filter(e => e.constructor.name != "CategoryChannel").filter(e => e.viewable == true)
         return {
             id: supportedServer.id,
             name: supportedServer.name,
