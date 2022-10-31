@@ -3,9 +3,10 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
 const Store = require('./modules/Store.js');
-const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth } = require('./modules/functions.js');
+const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth, checKTwitterLinked } = require('./modules/functions.js');
 const app = express();
 const { TwitterApi } = require('twitter-api-v2');
+const Twit = require('twit');
 var isDev___ = true
 
 const session = require('express-session');
@@ -453,54 +454,39 @@ io.use((socket, next) => {
 });
 
 
-function getAllTweets(userClient, options, callback = null, pagination = null, collectedTweets = []) {
-    var config = {
-        start_time: options.start_time,
-        max_results: 100,
-        expansions: ["attachments.media_keys", "author_id", "in_reply_to_user_id", "referenced_tweets.id", "referenced_tweets.id.author_id"],
-        "tweet.fields": ["attachments", "in_reply_to_user_id", "referenced_tweets", "text"],
-        "user.fields": ["verified"]
-    }
-    if (pagination) {
-        config.pagination_token = pagination
-    }
-    userClient.v2.userTimeline(options.user_id, config).then(timeline => {
-        if (timeline.meta.next_token) {
-            getAllTweets(userClient, options, callback, timeline.meta.next_token, [...collectedTweets, ...timeline.tweets])
-        } else {
-            if (callback) {
-                callback([...collectedTweets, ...timeline.tweets])
-            }
-        }
-
-    })
-
-}
 io.on("connection", async (socket) => {
     setInitialStoreValues()
     const userId = socket.request.session.passport.user || null
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
     var user = { user_id, email, username, discord_id, discord_avatar }
-    var userData = await getData(user)
+    var userTwitterAcc = await checKTwitterLinked(user)
+    if (userTwitterAcc.twitter_id != null) {
+        var consumer_key = process.env.TWITTER_CONSUMER_KEY
+        var consumer_secret = process.env.TWITTER_CONSUMER_SECRET
+        var twitterAccessToken = userTwitterAcc.token
+        var twitterAccessSecret = userTwitterAcc.tokenSecret
+        var userClient = new TwitterApi({
+            appKey: consumer_key,
+            appSecret: consumer_secret,
+            accessToken: twitterAccessToken,
+            accessSecret: twitterAccessSecret,
+        })
+        var T = new Twit({
+            consumer_key: consumer_key,
+            consumer_secret: consumer_secret,
+            access_token: twitterAccessToken,
+            access_token_secret: twitterAccessSecret,
+        })
+
+
+    }
+    socket.emit("connected")
+    var userData = await getData(user, userClient)
     userData.verified = true
     if (Store.verifiedUsers.filter(e => e == userData.discord_id).length == 0) {
         userData.verified = false
     }
-    if (userData.twitterAcc.twitter_id != null) {
-        var userClient = new TwitterApi({
-            appKey: process.env.TWITTER_CONSUMER_KEY,
-            appSecret: process.env.TWITTER_CONSUMER_SECRET,
-            accessToken: userData.twitterAcc.token,
-            accessSecret: userData.twitterAcc.tokenSecret,
-        })
-        userClient.v2.userByUsername('elonmusk', { "user.fields": ["verified"] }).then((user) => {
-            getAllTweets(userClient, { user_id: user.data.id, start_time: "2010-11-06T00:00:01Z" }, function (tweets) {
-                console.log(tweets);
-            })
-        });
 
-    }
-    socket.emit("connected")
     var { tasks } = userData
     var monitoredItemsTwitter = []
     var monitoredItemsDiscord = []
@@ -526,30 +512,16 @@ io.on("connection", async (socket) => {
 
     }
     if (monitoredItemsTwitter.length != 0 && userData.twitterAcc.twitter_id != null) {
-        var tasksWithDates = []
+
         for (let i = 0; i < alreadyJoinedTwitter.length; i++) {
-            var twitterUserName = alreadyJoinedTwitter[i];
-            var tasksWithUserName = monitoredItemsTwitter.filter(e => e.handle == twitterUserName)
-            var oldestTask = tasksWithUserName.sort((a, b) => new Date(a.created_time_stamp).getTime() - new Date(b.created_time_stamp).getTime())[0]
-            var oldestDate = new Date(oldestTask.created_time_stamp).toISOString()
-            tasksWithDates.push({
-                handle: twitterUserName,
-                date: oldestDate
+            const handle = alreadyJoinedTwitter[i];
+            var stream = T.stream('statuses/filter', { track: `from:${handle}` })
+
+            stream.on('tweet', function (tweet) {
+                io.to(`twitter_${handle}`).emit("data-monitored", { type: "twitter", handle, reason: "TweetCreate" })
             })
-        }
-        for (let i = 0; i < tasksWithDates.length; i++) {
-            const taskWithDates = tasksWithDates[i];
-            userClient.v2.usersByUsernames([taskWithDates.handle]).then((users) => {
-                userClient.v2.userTimeline(users.data[0].id, { start_time: taskWithDates.date, "tweet.fields": "created_at", max_results: 100 }).then(timeline => {
-                    console.log('====================================');
-                    console.log(timeline);
-                    console.log('====================================');
-                })
-            });
-
 
         }
-
 
     }
     for (let i = 0; i < monitoredItemsDiscord.length; i++) {
@@ -643,7 +615,7 @@ io.on("connection", async (socket) => {
 
         }
         await Promise.all(promises)
-        getData(userData).then((userData1) => {
+        getData(userData, userClient).then((userData1) => {
             socket.emit("userData-changed", { reason: "create-task", data: userData1 })
             socket.emit("task-created", taskId)
             userData = userData1
@@ -652,7 +624,7 @@ io.on("connection", async (socket) => {
     socket.on("change-task-name", async (action) => {
         var taskId = action.taskId
         await PromisifiedQuery(`UPDATE tasks SET name="${_escpe(action.taskName)}" WHERE task_id="${_escpe(taskId)}"`)
-        getData(userData).then((userData1) => {
+        getData(userData, userClient).then((userData1) => {
             socket.emit("userData-changed", { reason: "change-task-name", data: userData1 })
             userData = userData1
         })
@@ -689,7 +661,7 @@ io.on("connection", async (socket) => {
             var collection_name = monitoredOpenseaItem.collection_name
             socket.leave(`opensea_${collection_name}`)
         }
-        getData(userData).then((userData1) => {
+        getData(userData, userClient).then((userData1) => {
             socket.emit("userData-changed", { reason: "delete-task", data: userData1 })
             userData = userData1
         })
@@ -740,7 +712,7 @@ io.on("connection", async (socket) => {
             ) `)
             socket.join(`opensea_${collection_name}`)
         }
-        getData(userData).then((userData1) => {
+        getData(userData, userClient).then((userData1) => {
             socket.emit("userData-changed", { reason: "add-monitored-item", data: userData1 })
             userData = userData1
         })
@@ -763,7 +735,7 @@ io.on("connection", async (socket) => {
             var { handle } = data
             socket.leave(`twitter_${handle}`)
         }
-        getData(userData).then((userData1) => {
+        getData(userData, userClient).then((userData1) => {
             socket.emit("userData-changed", { reason: "delete-monitored-item", data: userData1 })
             userData = userData1
         })
@@ -773,13 +745,13 @@ io.on("connection", async (socket) => {
         socket.emit("supported-servers-changed", Store.supportedServers)
     })
     socket.on("get-data", action => {
-        getData(userData).then((userData1) => {
+        getData(userData, userClient).then((userData1) => {
             socket.emit("userData-changed", { reason: "get-data", data: userData1 })
             userData = userData1
         })
     })
     socket.on("req-data-monitored", action => {
-        getData(userData).then((userData1) => {
+        getData(userData, userClient).then((userData1) => {
             socket.emit("userData-changed", { reason: "res-data-monitored", data: userData1, ogData: action })
             userData = userData1
         })
