@@ -1,7 +1,7 @@
 const passport = require('passport');
 var { checkNotAuth, checkAuth, getData } = require("../../modules/functions")
 const router = require('express').Router();
-var isDev___ = true
+var isDev___ = false
 router.get("/", passport.authenticate("discord"));
 
 router.get('/redirect', checkNotAuth, passport.authenticate('discord', {

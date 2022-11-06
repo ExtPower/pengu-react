@@ -1,11 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import {
   Options,
   Discord_gray,
+  Twitss,
+  Comments,
+  Share,
+  LoveLike
 } from "../../assets/index";
 function TaskResultItem({ result }) {
   const [timeAgo, setTimeAgo] = useState(timeDifference(undefined, result.created_time_stamp))
-  function timeDifference(current = new Date().toLocaleString("en-US", { timeZone: "GMT" }), previous) {
+  function timeDifference(current = new Date().toLocaleString("en-US", { timeZone: "GMT" }), previous = "") {
 
     var msPerMinute = 60 * 1000;
     var msPerHour = msPerMinute * 60;
@@ -13,33 +18,39 @@ function TaskResultItem({ result }) {
     var msPerMonth = msPerDay * 30;
     var msPerYear = msPerDay * 365;
 
-    var elapsed = new Date(current).getTime() - new Date(previous.split(".")[0]).getTime();
+    var elapsed = new Date(current).getTime() - new Date(previous?.split(".")?.[0]).getTime();
 
     if (elapsed < msPerMinute) {
-      return `${Math.round(elapsed / 1000) == 1 ? "a" : Math.round(elapsed / 1000)} second${Math.round(elapsed / 1000) > 1 ? "s" : ""} ago`;
+      var time = Math.round(elapsed / 1000)
+      return `${time == 1 ? "a" : time} second${time > 1 ? "s" : ""} ago`;
 
     }
 
     else if (elapsed < msPerHour) {
-      return `${Math.round(elapsed / msPerMinute) == 1 ? "a" : Math.round(elapsed / msPerMinute)} minute${Math.round(elapsed / msPerMinute) > 1 ? "s" : ""} ago`;
+      var time = Math.round(elapsed / msPerMinute)
+      return `${time == 1 ? "a" : time} minute${time > 1 ? "s" : ""} ago`;
     }
 
     else if (elapsed < msPerDay) {
-      return `${Math.round(elapsed / msPerHour) == 1 ? "a" : Math.round(elapsed / msPerHour)} hour${Math.round(elapsed / msPerHour) > 1 ? "s" : ""} ago`;
+      var time = Math.round(elapsed / msPerHour)
+      return `${time == 1 ? "a" : time} hour${time > 1 ? "s" : ""} ago`;
 
     }
 
     else if (elapsed < msPerMonth) {
-      return `${Math.round(elapsed / msPerDay) == 1 ? "a" : Math.round(elapsed / msPerDay)} day${Math.round(elapsed / msPerDay) > 1 ? "s" : ""} ago`;
+      var time = Math.round(elapsed / msPerDay)
+      return `${time == 1 ? "a" : time} day${time > 1 ? "s" : ""} ago`;
 
     }
 
     else if (elapsed < msPerYear) {
-      return `${Math.round(elapsed / msPerMonth) == 1 ? "a" : Math.round(elapsed / msPerMonth)} month${Math.round(elapsed / msPerMonth) > 1 ? "s" : ""} ago`;
+      var time = Math.round(elapsed / msPerMonth)
+      return `${time == 1 ? "a" : time} month${time > 1 ? "s" : ""} ago`;
     }
 
     else {
-      return `${Math.round(elapsed / msPerYear) == 1 ? "a" : Math.round(elapsed / msPerYear)} year${Math.round(elapsed / msPerYear) > 1 ? "s" : ""} ago`;
+      var time = Math.round(elapsed / msPerYear)
+      return `${time == 1 ? "a" : time} year${time > 1 ? "s" : ""} ago`;
     }
   }
   useEffect(() => {
@@ -66,9 +77,6 @@ function TaskResultItem({ result }) {
               </span>
             </div>
             <span className="opption">
-              <a href={result.msg_url} target="_blank">
-                <img src={Options} />
-              </a>
             </span>
           </div>
           {result.attachements.map((attachement) => {
@@ -91,6 +99,46 @@ function TaskResultItem({ result }) {
         </div>
 
       }
+      {result.type == "twitter" &&
+        <div className="porfoliaMnitr">
+          <div className="upermonitr">
+            <div className="feedPostAuthorContainer">
+              <span className="mntiproo">
+                <img src={result.tweetUser.profile_image_url}></img>
+              </span>
+              <span className="postInfoContainer">
+                <label>{result.tweetUser.name}</label>
+                <p>
+                  {result.text}
+                </p>
+              </span>
+            </div>
+            <span className="opption">
+              <a href={`https://twitter.com/${result.tweetUser.username}/status/${result.id}`} target="_blank">
+                <img src={Options} />
+              </a>
+            </span>
+          </div>
+          <div className="downmonitr">
+            <img src={Twitss}></img>
+            <span className="comments">
+              <span>
+                <img src={Comments} />
+                <span>{result.public_metrics.reply_count}</span>
+              </span>
+              <span>
+                <img src={Share} />
+                <span>{result.public_metrics.retweet_count}</span>
+              </span>
+              <span>
+                <img src={LoveLike} />
+                <span>{result.public_metrics.like_count}</span>
+              </span>
+            </span>
+            <span>{timeAgo}</span>
+          </div>
+        </div>
+      }
     </td>
 
   );
@@ -98,7 +146,7 @@ function TaskResultItem({ result }) {
 
 export default TaskResultItem;
 
-/* <td>
+/*                <td>
                     <div className="porfoliaMnitr">
                       <div className="upermonitr">
                         <div className="feedPostAuthorContainer">

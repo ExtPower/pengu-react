@@ -146,7 +146,7 @@ const list = [
     after: SearchWhite,
   },
 ];
-var isDev___ = true;
+var isDev___ = false;
 export default function DashBoard() {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -178,7 +178,18 @@ export default function DashBoard() {
       `http://${isDev___ ? "localhost:3000" : "dashboard.penguplatform.com"}`
     );
     dispatch({ type: "change-data", name: "socket", value: socket });
-    socket.on("connected", (data) => {
+    socket.on("connected", (action) => {
+      dispatch({
+        name: "userData",
+        type: "change-data",
+        value: action.data.userData,
+      });
+      dispatch({
+        name: "supportedServers",
+        type: "change-data",
+        value: action.data.supportedServers,
+      });
+
       socket.on("supported-servers-changed", (data) => {
         dispatch({
           name: "supportedServers",
@@ -191,29 +202,6 @@ export default function DashBoard() {
       });
 
       socket.on("userData-changed", (action) => {
-        // var ogData = action.type.ogData
-        // if (
-        //   ogData.reason == "messageCreate" &&
-        //   ogData.type == "discord"
-        // ) {
-        //   var tasksAffected = userData.tasks.filter((task) =>
-        //     task.monitoredItems.discord.filter(
-        //       (monitoredItemDiscord) =>
-        //         monitoredItemDiscord.guild_id == ogData.guild_id &&
-        //         monitoredItemDiscord.channel_id == ogData.channel_id
-        //     )
-        //   );
-        //   var taskChangesArr = [
-        //     ...tasksChanges.filter((e) => e.task_id != ogData),
-        //   ];
-        //   dispatch({
-        //     name: "tasksChanges",
-        //     type: "change-data",
-        //     value: action.data,
-        //   });
-
-        //   return;
-        // }
         dispatch({
           name: "userData",
           type: "change-data",
@@ -223,9 +211,6 @@ export default function DashBoard() {
       socket.on("task-created", (action) => {
         navigate(`/editTask/${action}`);
       });
-
-      socket.emit("get-supported-servers");
-      socket.emit("get-data");
     });
   }, []);
 

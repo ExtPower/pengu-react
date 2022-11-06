@@ -1,18 +1,22 @@
+/* eslint-disable no-loop-func */
 var db = require("../modules/db")
 
-function checKTwitterLinked(user1) {
+function getDataWithoutTasks(user1) {
     return new Promise(async (resolve, reject) => {
         var user = { ...user1 }
         var userId = user.user_id
+        delete user.id
         var twitterAcc = await PromisifiedQuery(`SELECT * FROM twitter_account WHERE user_id="${_escpe(userId)}"`).then((res) => res[0] || { twitter_id: null })
-        resolve(twitterAcc)
+        user.twitterAcc = twitterAcc
+
+        resolve({ ...user })
     })
 
 }
-function getTwitterUserData(userClient, handle) {
+function getTwitterUserData(handle, userClient) {
     return new Promise((resolve, reject) => {
 
-        userClient.v2.userByUsername(handle, { "user.fields": ["verified"] }).then((user) => {
+        userClient.v2.userByUsername(handle, { "user.fields": ["entities", "id", "name", "profile_image_url", "public_metrics", "url", "verified"] }).then((user) => {
             resolve(user)
         });
     })
@@ -24,20 +28,20 @@ function getAllTweets(userClient, options) {
             var config = {
                 start_time: options.start_time,
                 max_results: 100,
-                expansions: ["attachments.media_keys", "author_id", "in_reply_to_user_id", "referenced_tweets.id", "referenced_tweets.id.author_id"],
-                "tweet.fields": ["attachments", "in_reply_to_user_id", "referenced_tweets", "text", "created_at", "author_id", "public_metrics"],
-                "user.fields": ["verified", "profile_image_url"]
+                "tweet.fields": ["attachments", "referenced_tweets", "text", "created_at", "public_metrics"],
+                "user.fields": ["verified", "profile_image_url", "name"]
             }
             if (pagination) {
                 config.pagination_token = pagination
             }
-            userClient.v2.userTimeline(options.user_id, config).then(timeline => {
+            userClient.v2.userTimeline(options.user.id, config).then(timeline => {
                 if (timeline.meta.next_token) {
                     getAllTweets1(userClient, options, callback, timeline.meta.next_token, [...collectedTweets, ...timeline.tweets])
                 } else {
                     var tweets = [...collectedTweets, ...timeline.tweets]
                     if (callback) {
                         callback({
+                            user: options.user,
                             tweets,
                             with_retweets_only: tweets.filter(tweet => tweet.referenced_tweets && tweet.referenced_tweets.filter(reference => reference.type == "quoted").length == 0),
                             with_quoted_only: tweets.filter(tweet => tweet.referenced_tweets && tweet.referenced_tweets.filter(reference => reference.type == "retweeted").length == 0),
@@ -52,18 +56,44 @@ function getAllTweets(userClient, options) {
     })
 
 }
-function getData(user1, userClient) {
+function getData(user1, userClient = false, cache = {}) {
     return new Promise(async (resolve, reject) => {
         var user = { ...user1 }
         var userId = user.user_id
         delete user.id
         var twitterAcc = await PromisifiedQuery(`SELECT * FROM twitter_account WHERE user_id="${_escpe(userId)}"`).then((res) => res[0] || { twitter_id: null })
         var tasks = await PromisifiedQuery(`SELECT * FROM tasks WHERE user_id="${_escpe(userId)}"`)
-        var userMonitoredItemsTwitter = await PromisifiedQuery(`SELECT tasks.user_id,monitored_items_twitter.* FROM monitored_items_twitter ,tasks WHERE tasks.task_id = monitored_items_twitter.task_id AND tasks.user_id="${_escpe(userId)}"`)
-        var monitoredItemsDiscord = await PromisifiedQuery(`SELECT * FROM monitored_items_discord WHERE 1`)
-        var monitoredItemsOpensea = await PromisifiedQuery(`SELECT * FROM monitored_items_opensea WHERE 1`)
-        var discord_msgs = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE 1`)
-        var discord_msgs_attachements = await PromisifiedQuery(`SELECT * FROM discord_msgs_attachements WHERE 1`)
+        var userMonitoredItemsTwitter = await PromisifiedQuery(`SELECT monitored_items_twitter.*, tasks.user_id FROM monitored_items_twitter, tasks WHERE
+        tasks.task_id = monitored_items_twitter.task_id
+        AND 
+        tasks.user_id="${_escpe(userId)}"
+        `)
+        var monitoredItemsDiscord = await PromisifiedQuery(`SELECT tasks.user_id, monitored_items_discord.* FROM tasks, monitored_items_discord WHERE 
+        tasks.task_id = monitored_items_discord.task_id 
+        AND 
+        tasks.user_id="${_escpe(userId)}"
+        `)
+        var monitoredItemsOpensea = await PromisifiedQuery(`SELECT tasks.user_id, monitored_items_opensea.* FROM tasks, monitored_items_opensea WHERE 
+        tasks.task_id = monitored_items_opensea.task_id 
+        AND
+        tasks.user_id="${_escpe(userId)}"
+        `)
+        var discord_msgs = await PromisifiedQuery(`SELECT tasks.user_id, tasks.task_id, discord_msgs_found.* FROM tasks, monitored_items_discord, discord_msgs_found WHERE 
+        tasks.task_id = monitored_items_discord.task_id 
+        AND 
+        tasks.user_id="${_escpe(userId)}"
+        AND
+        monitored_items_discord.channel_id = discord_msgs_found.msg_channel_id AND monitored_items_discord.guild_id = discord_msgs_found.msg_guild_id
+        `)
+        var discord_msgs_attachements = await PromisifiedQuery(`SELECT tasks.user_id, tasks.task_id, discord_msgs_found.msg_channel_id, discord_msgs_found.msg_guild_id, discord_msgs_attachements.* FROM tasks, monitored_items_discord, discord_msgs_found, discord_msgs_attachements WHERE 
+        tasks.task_id = monitored_items_discord.task_id 
+        AND 
+        tasks.user_id="${_escpe(userId)}"
+        AND
+        monitored_items_discord.channel_id = discord_msgs_found.msg_channel_id AND monitored_items_discord.guild_id = discord_msgs_found.msg_guild_id
+        AND
+        discord_msgs_attachements.msg_id = discord_msgs_found.msg_id
+        `)
         var handlesNoDup = [...new Set(userMonitoredItemsTwitter.map(e => e.handle))]
         var tasksWithDates = []
         for (let i = 0; i < handlesNoDup.length; i++) {
@@ -81,13 +111,25 @@ function getData(user1, userClient) {
             const monitoredItemTwitter = tasksWithDates[i];
             var handle = monitoredItemTwitter.handle
             var dateCreated = monitoredItemTwitter.created_time_stamp
-            var twitterUser = await getTwitterUserData(userClient, handle).then(result => result.data)
-            var results = await getAllTweets(userClient, { user_id: twitterUser.id, start_time: dateCreated })
-            twitter_tweets.push({
-                handle,
-                date: dateCreated,
-                results
-            })
+            if (userClient) {
+                var twitterUser = await getTwitterUserData(handle, userClient).then(result => result.data)
+                var results = await getAllTweets(userClient, { user: twitterUser, start_time: dateCreated })
+                twitter_tweets.push({
+                    handle,
+                    date: dateCreated,
+                    results
+                })
+                userMonitoredItemsTwitter.filter(e => e.handle == handle).forEach(item => {
+                    item.tweetUser = twitterUser
+                })
+            } else {
+                twitter_tweets.push({
+                    handle,
+                    date: dateCreated,
+                    results: {}
+                })
+
+            }
         }
 
         user.twitterAcc = twitterAcc
@@ -104,27 +146,34 @@ function getData(user1, userClient) {
                 opensea: monitoredItemsOpensea.filter(e => e.task_id == task.task_id)
             }
             task.results = [
-                ...discord_msgs.filter(discordmsg => task.monitoredItems.discord.filter(monitoredItem => discordmsg.msg_channel_id == monitoredItem.channel_id && discordmsg.msg_guild_id == monitoredItem.guild_id && monitoredItem.created_time_stamp < discordmsg.created_time_stamp).length > 0).map((item) => {
-                    return {
-                        ...item,
-                        type: "discord"
-                    }
-                }),
-                ...twitter_tweets.filter(handle_results => task.monitoredItems.twitter.filter(monitoredItem => monitoredItem.handle == handle_results.handle).length > 0).map(handle_results => {
-                    var twitterTask = task.monitoredItems.twitter.filter(monitoredItem => monitoredItem.handle == handle_results.handle)[0]
-                    var isQuoteTweets = twitterTask.quote_tweets
-                    var isRetweets = twitterTask.retweets
+                ...discord_msgs.map((item) => { return { ...item, type: "discord" } }),
+
+            ]
+            twitter_tweets.filter(handle_results => task.monitoredItems.twitter.filter(monitoredItem => monitoredItem.handle == handle_results.handle).length > 0).map(handle_results => {
+                var twitterTask = task.monitoredItems.twitter.filter(monitoredItem => monitoredItem.handle == handle_results.handle)[0]
+                var isQuoteTweets = twitterTask.quote_tweets
+                var isRetweets = twitterTask.retweets
+                var tweetUser = twitterTask.tweetUser
+                var results = []
+                if (userClient) {
                     if (isQuoteTweets && isRetweets) {
-                        return handle_results.results.tweets
+                        results = handle_results.results.tweets
                     } else if (isQuoteTweets && !isRetweets) {
-                        return handle_results.results.with_quoted_only
+                        results = handle_results.results.with_quoted_only
                     } else if (!isQuoteTweets && isRetweets) {
-                        return handle_results.results.with_retweets_only
+                        results = handle_results.results.with_retweets_only
                     } else if (!isQuoteTweets && !isRetweets) {
-                        return handle_results.results.tweets_only
+                        results = handle_results.results.tweets_only
                     }
+                }
+                return results.map(result => { return { ...result, tweetUser, created_time_stamp: result.created_at } })
+            })
+                .map(array => array.map((item) => { return { ...item, type: "twitter" } }) || [])
+                .forEach((item) => {
+                    task.results.push(...item)
                 })
-            ].sort((a, b) => b.created_time_stamp - a.created_time_stamp)
+            task.results = task.results.sort((a, b) => new Date(b.created_time_stamp).getTime() - new Date(a.created_time_stamp).getTime())
+
         }
         resolve({ ...user, tasks })
     })
@@ -201,4 +250,4 @@ function checkNotAuth(req, res, next) {
     res.redirect("/")
 
 }
-module.exports = { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth, checKTwitterLinked, getTwitterUserData, getAllTweets }
+module.exports = { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth, getDataWithoutTasks, getTwitterUserData, getAllTweets }

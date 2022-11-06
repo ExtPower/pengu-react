@@ -488,11 +488,13 @@ function MonitoringTask() {
                   monitoredItemsTwitter.map((monitoredItem, index) => {
                     return (
                       <MonitoringItem
-                        icon={monitoredItem.icon}
-                        letter={monitoredItem.letter}
-                        isVerified={monitoredItem.isVerified}
-                        name={monitoredItem.name}
-                        monitorItemId={monitoredItem.monitored_id}
+                        icon={monitoredItem.tweetUser?.profile_image_url}
+                        letter={""}
+                        isVerified={monitoredItem.tweetUser?.verified}
+                        name={
+                          monitoredItem.tweetUser?.name || monitoredItem.handle
+                        }
+                        monitorItemId={monitoredItem?.monitored_id}
                         type="twitter"
                       />
                     );
