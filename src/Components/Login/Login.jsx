@@ -2,7 +2,7 @@ import React from "react";
 import DiscordIcon from "../../assets/discordIcon.png";
 import DiscordBackground from "../../assets/discordBackground.webp";
 import "./login.css";
-var isDev___ = false;
+var isDev___ = true;
 export default function Login() {
   return (
     <div className="loginSection">

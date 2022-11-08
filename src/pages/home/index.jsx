@@ -146,7 +146,7 @@ const list = [
     after: SearchWhite,
   },
 ];
-var isDev___ = false;
+var isDev___ = true;
 export default function DashBoard() {
   const location = useLocation();
   const dispatch = useDispatch();

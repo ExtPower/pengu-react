@@ -1,5 +1,5 @@
 const mysql = require('mysql');
-var isDev___ = false
+var isDev___ = true
 // Create connection
 var db = mysql.createConnection({
     host: isDev___ ? "3.131.160.211" : 'localhost',

@@ -7,7 +7,7 @@ const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth, getDataWitho
 const app = express();
 const { TwitterApi, ETwitterStreamEvent } = require('twitter-api-v2');
 const Twit = require('twit');
-var isDev___ = false
+var isDev___ = true
 
 const session = require('express-session');
 const passport = require('passport');
@@ -475,10 +475,12 @@ io.on("connection", async (socket) => {
 
 
     }
-    getData(userData, userClient).then((userData1) => {
+    getData(userData, userClient).then(async (userData1) => {
 
         userData = userData1
-        userData.verified = true
+        if (isDev___) {
+            userData.verified = true
+        }
         if (Store.verifiedUsers.filter(e => e == userData.discord_id).length == 0) {
             userData.verified = false
         }
@@ -507,40 +509,46 @@ io.on("connection", async (socket) => {
             socket.join(`twitter_${twitterTask.handle}`)
 
         }
-        if (monitoredItemsTwitter.length != 0 && userData.twitterAcc.twitter_id != null) {
+        socket.emit("connected", {
+            reason: "connected",
+            data: {
+                userData: userData1,
+                supportedServers: Store.supportedServers,
+            },
+        });
 
+        if (monitoredItemsTwitter.length != 0 && userData.twitterAcc.twitter_id != null) {
+            const rules = await userClient.v2.streamRules();
+            if (rules.data?.length) {
+                await userClient.v2.updateStreamRules({
+                    delete: { ids: rules.data.map(rule => rule.id) },
+                });
+            }
+
+            var rulesAdd = []
+            // Add our rules
             for (let i = 0; i < alreadyJoinedTwitter.length; i++) {
                 const handle = alreadyJoinedTwitter[i];
-                // var streamFilter = await userClient.v2.strea({
-                //     // See FilterStreamParams interface.
-                //     track: `from:${handle}`,
-                // });
-                // streamFilter.on(ETwitterStreamEvent.Data, function (tweet) {
-                //     console.log(tweet);
-                //     io.to(`twitter_${handle}`).emit("data-monitored", { type: "twitter", handle, reason: "TweetCreate" })
-                // })
-                // streamFilter.on(
-                //     // Emitted when Node.js {response} emits a 'error' event (contains its payload).
-                //     ETwitterStreamEvent.ConnectionError,
-                //     err => console.log('Connection error!', err),
-                // );
-
-                // streamFilter.on(
-                //     // Emitted when Node.js {response} is closed by remote or using .close().
-                //     ETwitterStreamEvent.ConnectionClosed,
-                //     () => console.log('Connection has been closed.'),
-                // );
-
-                // streamFilter.on(
-                //     // Emitted when a Twitter sent a signal to maintain connection active
-                //     ETwitterStreamEvent.DataKeepAlive,
-                //     () => console.log('Twitter has a keep-alive packet.'),
-                // );
-
-                // // Enable reconnect feature
-                // streamFilter.autoReconnect = true;
-
+                rulesAdd.push({ value: `from:${handle}` })
             }
+
+            await userClient.v2.updateStreamRules({
+                add: rulesAdd,
+            });
+
+            const stream = await userClient.v2.searchStream({
+                "tweet.fields": ["attachments", "referenced_tweets", "text", "created_at", "public_metrics"],
+                "user.fields": ["verified", "profile_image_url", "name"]
+            });
+            // Enable auto reconnect
+            stream.autoReconnect = true;
+
+            stream.on(ETwitterStreamEvent.Data, async tweet => {
+                // to improve
+                getData(userData, userClient).then(user => {
+                    socket.emit("userData-changed", { reason: "twitter-stream-triggered", data: user })
+                })
+            });
 
         }
         for (let i = 0; i < monitoredItemsDiscord.length; i++) {
@@ -565,13 +573,6 @@ io.on("connection", async (socket) => {
 
         }
 
-        socket.emit("connected", {
-            reason: "connected",
-            data: {
-                userData: userData1,
-                supportedServers: Store.supportedServers,
-            },
-        });
 
         socket.on("create-task", async (action) => {
             var taskId = uuid()
@@ -583,13 +584,13 @@ io.on("connection", async (socket) => {
             var openseaTasks = data.opensea || []
             var promises = []
             promises.push(await PromisifiedQuery(`INSERT IGNORE INTO tasks (user_id, task_id, name, type) 
-        VALUES 
-        (
-            "${_escpe(userId)}",
-            "${_escpe(taskId)}",
-            "${_escpe(taskName)}",
-            "${_escpe(type)}"
-        )`))
+            VALUES 
+            (
+                "${_escpe(userId)}",
+                "${_escpe(taskId)}",
+                "${_escpe(taskName)}",
+                "${_escpe(type)}"
+            )`))
 
             for (let i = 0; i < twitterTasks.length; i++) {
                 var twitterTask = twitterTasks[i];
@@ -597,15 +598,15 @@ io.on("connection", async (socket) => {
                 var type_twitter = twitterTask.type
                 var monitoredId = uuid()
                 promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
-            VALUES 
-            (
-                "${_escpe(taskId)}",
-                "${_escpe(monitoredId)}",
-                "${_escpe(handle)}",
-                "${_escpe(retweets)}",
-                "${_escpe(quote_tweets)}",
-                "${_escpe(type_twitter)}"
-            ) `))
+                VALUES 
+                (
+                    "${_escpe(taskId)}",
+                    "${_escpe(monitoredId)}",
+                    "${_escpe(handle)}",
+                    "${_escpe(retweets)}",
+                    "${_escpe(quote_tweets)}",
+                    "${_escpe(type_twitter)}"
+                ) `))
                 socket.join(`twitter_${handle}`)
 
             }
@@ -615,13 +616,13 @@ io.on("connection", async (socket) => {
                 var server_details = supportedServers.filter(e => e.id == guild_id)[0] || {}
                 var monitoredId = uuid()
                 promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id) 
-            VALUES 
-            (
-                "${_escpe(taskId)}",
-                "${_escpe(monitoredId)}",
-                "${_escpe(channel_id)}",
-                "${_escpe(guild_id)}"
-            ) `))
+                VALUES 
+                (
+                    "${_escpe(taskId)}",
+                    "${_escpe(monitoredId)}",
+                    "${_escpe(channel_id)}",
+                    "${_escpe(guild_id)}"
+                ) `))
                 socket.join(`discord_${guild_id}_${channel_id}`)
 
             }
@@ -631,13 +632,13 @@ io.on("connection", async (socket) => {
                 var type_opensea = openseaTask.type
                 var monitoredId = uuid()
                 promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
-            VALUES 
-            (
-                "${_escpe(taskId)}",
-                "${_escpe(monitoredId)}",
-                "${_escpe(collection_name)}",
-                "${_escpe(type_opensea)}"
-            ) `))
+                VALUES 
+                (
+                    "${_escpe(taskId)}",
+                    "${_escpe(monitoredId)}",
+                    "${_escpe(collection_name)}",
+                    "${_escpe(type_opensea)}"
+                ) `))
                 socket.join(`opensea_${collection_name}`)
 
             }
