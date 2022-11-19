@@ -13,8 +13,10 @@ export default function Login() {
           <h3>Welcome to Penguplatform!</h3>
           <p>Login with discord</p>
           <a
-            href={`http://${
-              isDev___ ? "localhost:3000" : "dashboard.penguplatform.com"
+            href={`${
+              isDev___
+                ? "http://localhost:3000"
+                : "https://dashboard.penguplatform.com"
             }/auth/discord`}
           >
             Login

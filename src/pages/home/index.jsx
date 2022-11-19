@@ -127,21 +127,25 @@ const Drawer = styled(MuiDrawer, {
 const list = [
   {
     img: Homee,
+    link: "home",
     text: ["Home"],
     after: HomeeWhitee,
   },
   {
     img: View,
+    link: "feed",
     text: ["Feed", "createTask"],
     after: FeeedWhite,
   },
   {
     img: Wallet,
+    link: "wallet",
     text: ["Wallet"],
     after: WalletTrasn,
   },
   {
     img: Search,
+    link: "opensea",
     text: ["OpenSea"],
     after: SearchWhite,
   },
@@ -154,6 +158,14 @@ export default function DashBoard() {
   const [open, setOpen] = React.useState(false);
   const [ComponenNamee, setComponenNamee] = React.useState("Home");
   const userData = useSelector((state) => state.userData);
+  function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  var isComingsoon =
+    ComponenNamee.toLowerCase() == "home" ||
+    ComponenNamee.toLowerCase() == "opensea" ||
+    ComponenNamee.toLowerCase() == "wallet";
   // const tasksChanges = useSelector((state) => state.tasksChanges);
   const navigate = useNavigate();
   useEffect(() => {
@@ -171,11 +183,15 @@ export default function DashBoard() {
         pageName = "";
       }
     }
-    setComponenNamee(pageName);
+    setComponenNamee(capitalizeFirstLetter(pageName));
   }, [userData, location]);
   useEffect(() => {
     const socket = io(
-      `http://${isDev___ ? "localhost:3000" : "dashboard.penguplatform.com"}`
+      `${
+        isDev___
+          ? "http://localhost:3000"
+          : "https://dashboard.penguplatform.com"
+      }`
     );
     dispatch({ type: "change-data", name: "socket", value: socket });
     socket.on("connected", (action) => {
@@ -244,7 +260,15 @@ export default function DashBoard() {
       ) : (
         <Box sx={{ display: "flex" }}>
           <CssBaseline />
-          <AppBar position="fixed" open={open}>
+          <AppBar
+            position="fixed"
+            open={open}
+            sx={{
+              ...(isComingsoon
+                ? { filter: "blur(20px)", userSelect: "none" }
+                : {}),
+            }}
+          >
             <Navbar
               open={open}
               handleDrawerOpen={handleDrawerOpen}
@@ -284,7 +308,7 @@ export default function DashBoard() {
                     disablePadding
                     sx={{ display: "block" }}
                   >
-                    <Link to={`/${item.text[0]}`}>
+                    <Link to={`/${item.link}`}>
                       {/* <Tooltip
                   title={item.text[0]}
                   placement="right-start"
@@ -325,7 +349,9 @@ export default function DashBoard() {
                           }}
                           className={
                             item.text.some(
-                              (text) => `/${text}` === location.pathname
+                              (text) =>
+                                `/${text.toLowerCase()}` ===
+                                location.pathname.toLowerCase()
                             )
                               ? "backlogg"
                               : ""
@@ -344,7 +370,9 @@ export default function DashBoard() {
                             <img
                               src={
                                 item.text.some(
-                                  (text) => `/${text}` === location.pathname
+                                  (text) =>
+                                    `/${text.toLowerCase()}` ===
+                                    location.pathname.toLowerCase()
                                 )
                                   ? item.after
                                   : item.img
@@ -457,15 +485,20 @@ export default function DashBoard() {
             <Box
               component="main"
               sx={{
-                flexGrow: 1,
-                p: 3,
-                height: "100vh",
-                paddingTop: 0,
-                paddingRight: 0,
-                paddingBottom: 0,
-                display: "flex",
-                flexDirection: "column",
-                maxWidth: "calc(100% - 65px)",
+                ...{
+                  flexGrow: 1,
+                  p: 3,
+                  height: "100vh",
+                  paddingTop: 0,
+                  paddingRight: 0,
+                  paddingBottom: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  maxWidth: "calc(100% - 65px)",
+                },
+                ...(isComingsoon
+                  ? { filter: "blur(20px)", userSelect: "none" }
+                  : {}),
               }}
             >
               {location.pathname !== "/Home" &&
@@ -486,6 +519,19 @@ export default function DashBoard() {
               </div>
             </Box>
           )}
+          {userData.verified && isComingsoon && (
+            <h1
+              style={{
+                transform: "translate(-50%, -50%)",
+                top: "50%",
+                position: "absolute",
+                left: "50%",
+              }}
+            >
+              Coming soon
+            </h1>
+          )}
+
           {!userData.verified && <h1>You are not verified</h1>}
         </Box>
       )}

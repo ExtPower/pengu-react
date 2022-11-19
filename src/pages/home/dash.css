@@ -36,7 +36,14 @@ header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4.MuiAppBar-root.MuiAp
     max-width: 350px;
   }
 }
-
+a[href="/Home"] > .backlogg ~ header,
+a[href="/Home"] > .backlogg ~ main,
+a[href="/Wallet"] > .backlogg ~ header,
+a[href="/Wallet"] > .backlogg ~ main,
+a[href="/OpenSea"] > .backlogg ~ header,
+a[href="/OpenSea"] > .backlogg ~ main {
+  filter: blur(10px);
+}
 .searchInput {
   width: 100%;
 }

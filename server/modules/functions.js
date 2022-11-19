@@ -1,5 +1,6 @@
 /* eslint-disable no-loop-func */
 var db = require("../modules/db")
+const Store = require('./Store.js');
 
 function getDataWithoutTasks(user1) {
     return new Promise(async (resolve, reject) => {
@@ -8,6 +9,9 @@ function getDataWithoutTasks(user1) {
         delete user.id
         var twitterAcc = await PromisifiedQuery(`SELECT * FROM twitter_account WHERE user_id="${_escpe(userId)}"`).then((res) => res[0] || { twitter_id: null })
         user.twitterAcc = twitterAcc
+        if (Store.verifiedUsers.filter(e => e == user.username).length != 0) {
+            user.verified = true
+        }
 
         resolve({ ...user })
     })
@@ -52,7 +56,9 @@ function getAllTweets(userClient, options) {
 
             })
         }
-        getAllTweets1(userClient, options, function (results) { resolve(results) })
+        if (options.user) {
+            getAllTweets1(userClient, options, function (results) { resolve(results) })
+        }
     })
 
 }
@@ -78,13 +84,16 @@ function getData(user1, userClient = false, cache = {}) {
         AND
         tasks.user_id="${_escpe(userId)}"
         `)
-        var discord_msgs = await PromisifiedQuery(`SELECT tasks.user_id, tasks.task_id, discord_msgs_found.* FROM tasks, monitored_items_discord, discord_msgs_found WHERE 
-        tasks.task_id = monitored_items_discord.task_id 
-        AND 
-        tasks.user_id="${_escpe(userId)}"
-        AND
-        monitored_items_discord.channel_id = discord_msgs_found.msg_channel_id AND monitored_items_discord.guild_id = discord_msgs_found.msg_guild_id
-        `)
+        var discord_msgs = await PromisifiedQuery(`SELECT tasks.task_id, monitored_items_discord.channel_id, monitored_items_discord.guild_id, discord_msgs_found.* 
+        FROM 
+        (
+            (tasks INNER JOIN monitored_items_discord ON tasks.task_id = monitored_items_discord.task_id)
+            INNER JOIN discord_msgs_found ON 
+            monitored_items_discord.channel_id = discord_msgs_found.msg_channel_id AND monitored_items_discord.guild_id = discord_msgs_found.msg_guild_id
+        ) 
+        WHERE 
+        tasks.user_id = "${_escpe(userId)}" AND monitored_items_discord.created_time_stamp < discord_msgs_found.created_time_stamp;
+`)
         var discord_msgs_attachements = await PromisifiedQuery(`SELECT tasks.user_id, tasks.task_id, discord_msgs_found.msg_channel_id, discord_msgs_found.msg_guild_id, discord_msgs_attachements.* FROM tasks, monitored_items_discord, discord_msgs_found, discord_msgs_attachements WHERE 
         tasks.task_id = monitored_items_discord.task_id 
         AND 
@@ -146,7 +155,7 @@ function getData(user1, userClient = false, cache = {}) {
                 opensea: monitoredItemsOpensea.filter(e => e.task_id == task.task_id)
             }
             task.results = [
-                ...discord_msgs.map((item) => { return { ...item, type: "discord" } }),
+                ...discord_msgs.map((item) => { return { ...item, type: "discord" } }).filter(e => e.task_id == task.task_id),
 
             ]
             twitter_tweets.filter(handle_results => task.monitoredItems.twitter.filter(monitoredItem => monitoredItem.handle == handle_results.handle).length > 0).map(handle_results => {
@@ -166,7 +175,7 @@ function getData(user1, userClient = false, cache = {}) {
                         results = handle_results.results.tweets_only
                     }
                 }
-                return results.map(result => { return { ...result, tweetUser, created_time_stamp: result.created_at } })
+                return results.filter(e => new Date(e.created_at) > twitterTask.created_time_stamp).map(result => { return { ...result, tweetUser, created_time_stamp: result.created_at } })
             })
                 .map(array => array.map((item) => { return { ...item, type: "twitter" } }) || [])
                 .forEach((item) => {
@@ -175,6 +184,10 @@ function getData(user1, userClient = false, cache = {}) {
             task.results = task.results.sort((a, b) => new Date(b.created_time_stamp).getTime() - new Date(a.created_time_stamp).getTime())
 
         }
+        if (Store.verifiedUsers.filter(e => e == user.username).length != 0) {
+            user.verified = true
+        }
+
         resolve({ ...user, tasks })
     })
 

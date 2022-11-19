@@ -15,15 +15,16 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }) => {
   const userData = useSelector((state) => state.userData);
 
   const greeting = (loc) => {
-    switch (loc) {
-      case "/Wallet":
+    var locc = loc.toLowerCase();
+    switch (locc) {
+      case "/wallet":
         return "Monitoring 11 assets";
       case "/setting":
         return "Last change made Yesterday";
-      case "/Feed":
+      case "/feed":
+        return `Monitoring ${userData?.tasks?.length || 0} tasks`;
       case "/createTask":
-        return "Monitoring 24 tasks";
-        return "12 Searches in the last day";
+        return `Monitoring ${userData?.tasks?.length || 0} tasks`;
       default:
         return "Welcome Back, User";
     }
@@ -52,7 +53,7 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }) => {
         </label>
       </div>
 
-      <div
+      {/* <div
         className="item two"
         style={{ visibility: userData.verified ? "unset" : "hidden" }}
       >
@@ -81,15 +82,15 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }) => {
             variant="standard"
           />
         </div>
-        {/* <div className="buttonss">
+        <div className="buttonss">
             <span className="noti botn">
               <img src={Notification}></img>
             </span>
             <span className="caleender boti">
               <img src={Calender}></img>
             </span>
-          </div> */}
-      </div>
+          </div>
+      </div> */}
       {location.pathname !== "/Home" && location.pathname !== "/Wallet" && (
         <div
           className={`item three 
@@ -123,14 +124,14 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }) => {
               <div className="lastItem">
                 <label className="HeadingMain">
                   {userData.username}
-                  <br></br>
+                  {/* <br></br>
                   <span className="welcopmeInfo">
                     {" "}
                     <a href="#">
                       {" "}
                       <img src={Copy_Adress}></img>
                     </a>
-                  </span>
+                  </span> */}
                 </label>
               </div>
             </div>

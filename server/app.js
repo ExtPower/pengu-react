@@ -1,17 +1,22 @@
 const express = require('express');
-const { createServer } = require("http");
+const http = require("http");
+var path = require('path');
+
+const https = require("https");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
 const Store = require('./modules/Store.js');
 const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth, getDataWithoutTasks, getTwitterUserData } = require('./modules/functions.js');
 const app = express();
 const { TwitterApi, ETwitterStreamEvent } = require('twitter-api-v2');
-const Twit = require('twit');
+var fs = require("fs")
 var isDev___ = true
-
+var options = {
+    key: fs.readFileSync(path.join(__dirname, "certificates/key.pem")),
+    cert: fs.readFileSync(path.join(__dirname, "certificates/cert.pem"))
+}
 const session = require('express-session');
 const passport = require('passport');
-const path = require('path');
 const dotenv = require('dotenv');
 const uuid = require("uuid").v4
 // const Discord = require("discord.js");
@@ -20,8 +25,8 @@ const uuid = require("uuid").v4
 dotenv.config({ path: path.join(__dirname, ".env") })
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'static')))
-const server_id = "1025057951238586379"
-const verified_role_id = "1025058037666414622"
+const server_id = "990097643139108896"
+const verified_role_id = "1041891597819838495"
 
 // twitter strategie
 const TwitterStrategy = require("passport-twitter").Strategy;
@@ -121,27 +126,32 @@ const bot = new Client({
     partials: [Partials.Channel, Partials.GuildMember, Partials.Message],
 })
 
-console.log('bot.login');
 function changeSupportedServers() {
     setInitialStoreValues()
     io.emit(`supported-servers-changed`, Store.supportedServers)
 
 }
+console.log('logging into bot');
 bot.login(process.env.BOT_TOKEN);
 bot.on('ready', async () => {
-    console.log("bot");
+    console.log(`${bot.user.tag} is ready`);
     changeSupportedServers()
 });
 bot.on('guildCreate', async (guild) => {
+    console.log(guild);
+    await PromisifiedQuery(`INSERT IGNORE INTO servers_added (server_id, server_name) VALUES ("${_escpe(guild.id)}","${_escpe(guild.name)}")`)
     changeSupportedServers()
 });
 bot.on('guildDelete', async (guild) => {
+    await PromisifiedQuery(`DELETE FROM servers_added WHERE server_id="${_escpe(guild.id)}"`)
     changeSupportedServers()
-    await PromisifiedQuery(`DELETE FROM monitored_items_discord WHERE guild_id="${_escpe(guild.id)}"`)
 });
 bot.on('guildUpdate', async (guildOld, guildNew) => {
+    await PromisifiedQuery(`DELETE FROM servers_added WHERE server_id="${_escpe(guildNew.id)}"`)
+    await PromisifiedQuery(`INSERT IGNORE INTO servers_added (server_id, server_name) VALUES ("${_escpe(guildNew.id)}","${_escpe(guildNew.name)}")`)
     changeSupportedServers()
 });
+
 
 bot.on("guildMemberAdd", async (member) => {
     updateUsernamesMessagesDiscord(member.user)
@@ -268,8 +278,11 @@ bot.on('messageCreate', async (message) => {
         io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageCreate" })
     })
 });
-function updateUsernamesMessagesDiscord(user) {
+function updateUsernamesMessagesDiscord(user = {}) {
     var userId = user.id
+    if (userId == null) {
+        return
+    }
     var userTag = user.tag
     var userAvatar = user.avatar != null ? `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png` : user.defaultAvatarURL
     PromisifiedQuery(`UPDATE discord_msgs_found SET discord_user_avatar="${_escpe(userAvatar)}",discord_user_tag="${_escpe(userTag)}" WHERE discord_user_id="${_escpe(userId)}" AND (discord_user_avatar != "${_escpe(userAvatar)}" OR discord_user_tag != "${_escpe(userTag)}")`)
@@ -318,7 +331,6 @@ bot.on("guildMemberUpdate", (oldMember, newMember) => {
 // end
 // discordstrategy
 const DiscordStrategy = require("passport-discord").Strategy;
-
 passport.use(
     new DiscordStrategy(
         {
@@ -400,6 +412,7 @@ passport.deserializeUser(async (userId, done) => {
     var user = { user_id, email, username, discord_id, discord_avatar }
     if (user.user_id != null) done(null, user);
 });
+const appOnlyClient = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
 
 
 // end
@@ -433,14 +446,17 @@ app.get("/*", checkAuth, function (req, res) {
 })
 
 
-const httpServer = createServer(app);
+const httpServer = http.createServer(app);
+const httpsServer = https.createServer(options, app);
+
 const io = new Server(httpServer, {
     cors: {
-        origin: ["https://admin.socket.io/"],
+        origin: ["https://admin.socket.io/", "https://dashboard.penguplatform.com/"],
         credentials: true
 
     }
 });
+io.attach(httpsServer)
 io.use(wrap(sessionMiddleware));
 // only allow authenticated users
 io.use((socket, next) => {
@@ -452,8 +468,21 @@ io.use((socket, next) => {
         next(new Error("unauthorized"));
     }
 });
+console.log("get rules");
 
+appOnlyClient.v2.streamRules().then((rules) => {
+    if ((rules?.data || [])?.length != 0) {
+        console.log("update rules");
 
+        appOnlyClient.v2.updateStreamRules({
+            delete: {
+                ids: rules.data?.map((ruleToAdd) => {
+                    return ruleToAdd.id
+                }) || []
+            },
+        })
+    }
+})
 io.on("connection", async (socket) => {
     setInitialStoreValues()
     const userId = socket.request.session.passport.user || null
@@ -475,16 +504,17 @@ io.on("connection", async (socket) => {
 
 
     }
+    socket.emit("connected", {
+        reason: "connected",
+        data: {
+            userData: { ...userData, loading: true },
+            supportedServers: Store.supportedServers,
+        },
+    });
+
     getData(userData, userClient).then(async (userData1) => {
 
         userData = userData1
-        if (isDev___) {
-            userData.verified = true
-        }
-        if (Store.verifiedUsers.filter(e => e == userData.discord_id).length == 0) {
-            userData.verified = false
-        }
-
         var { tasks } = userData
         var monitoredItemsTwitter = []
         var monitoredItemsDiscord = []
@@ -509,46 +539,132 @@ io.on("connection", async (socket) => {
             socket.join(`twitter_${twitterTask.handle}`)
 
         }
-        socket.emit("connected", {
-            reason: "connected",
-            data: {
-                userData: userData1,
-                supportedServers: Store.supportedServers,
-            },
-        });
+        socket.emit("userData-changed", { reason: "getData", data: userData1 })
 
         if (monitoredItemsTwitter.length != 0 && userData.twitterAcc.twitter_id != null) {
-            const rules = await userClient.v2.streamRules();
-            if (rules.data?.length) {
-                await userClient.v2.updateStreamRules({
-                    delete: { ids: rules.data.map(rule => rule.id) },
-                });
-            }
+            // function replaceRules(handlesToAdd) {
+            //     return new Promise(async (resolve, reject) => {
+            //         console.log("get rules");
 
-            var rulesAdd = []
-            // Add our rules
-            for (let i = 0; i < alreadyJoinedTwitter.length; i++) {
-                const handle = alreadyJoinedTwitter[i];
-                rulesAdd.push({ value: `from:${handle}` })
-            }
+            //         const rules = await appOnlyClient.v2.streamRules();
 
-            await userClient.v2.updateStreamRules({
-                add: rulesAdd,
+            //         // Add our rules
+            //         var rulesToAdd = [""]
+            //         var rulesEdittedIndex = 0
+            //         for (let i = 0; i < handlesToAdd.length; i++) {
+            //             const handleToAdd = handlesToAdd[i];
+            //             if (rulesToAdd[rulesEdittedIndex].length < 512) {
+            //                 if (rulesToAdd[rulesEdittedIndex] == "") {
+            //                     rulesToAdd[rulesEdittedIndex] = `from:${handleToAdd}`
+            //                 } else {
+            //                     rulesToAdd[rulesEdittedIndex] += ` OR from:${handleToAdd}`
+            //                 }
+            //             } else {
+            //                 rulesEdittedIndex++
+            //                 rulesToAdd[rulesEdittedIndex] = ""
+            //                 i--
+            //                 continue
+            //             }
+            //         }
+            //         var options = null
+            //         if (rulesToAdd?.filter(e => e != "")?.length != 0) {
+            //             if (options == null) {
+            //                 options = {}
+            //             }
+            //             options = {
+            //                 add: rulesToAdd?.filter(e => e != "").map((ruleToAdd) => {
+            //                     return {
+            //                         value: ruleToAdd
+            //                     }
+            //                 }),
+
+            //             }
+            //         }
+            //         if (rules.data?.length) {
+            //             if (options == null) {
+            //                 options = {}
+            //             }
+
+            //             options.delete = {
+            //                 ids: rules.data.map((ruleToAdd) => {
+            //                     return ruleToAdd.id
+            //                 })
+            //             }
+            //         }
+            //         if (options != null) {
+            //             console.log("update rules");
+
+            //             await appOnlyClient.v2.updateStreamRules(options)
+            //         }
+            //         resolve()
+            //     })
+            // }
+            socket.on("disconnect", async (action) => {
+                console.log('====================================');
+                console.log(action);
+                console.log('====================================');
+                // var allTwitterSockets = [...io.sockets.adapter.rooms].map(item => item[0]).filter(e => e.indexOf("twitter_") != -1)
+                // var handlesToAdd = [...new Set(...allTwitterSockets.map(e => e.split("_")[1]))]
+                // await replaceRules(handlesToAdd)
             });
+            // var handlesFromRules = []
+            // var handlesToAdd = [...new Set([...alreadyJoinedTwitter, ...handlesFromRules])]s
+            var streamInterval = setInterval(() => {
+                if (socket.connected) {
+                    getData(userData, userClient).then((userData1) => {
+                        socket.emit("userData-changed", { reason: "twitterStream", data: userData1 })
+                    })
+                } else {
+                    clearInterval(streamInterval)
+                }
+            }, 3000);
+            // replaceRules(handlesToAdd).then(() => {
+            //     //stream
+            //     console.log('====================================');
+            //     console.log("start stream");
+            //     console.log('====================================');
+            //     async function tryConnection(time = 0) {
+            //         if (socket.connected) {
+            //             try {
+            //                 return appOnlyClient.v2.searchStream({
+            //                     "tweet.fields": ["attachments", "referenced_tweets", "text", "created_at", "public_metrics", "author_id"],
+            //                     "user.fields": ["verified", "profile_image_url", "name"],
+            //                     "expansions": ["author_id", "entities.mentions.username", "attachments.poll_ids"],
 
-            const stream = await userClient.v2.searchStream({
-                "tweet.fields": ["attachments", "referenced_tweets", "text", "created_at", "public_metrics"],
-                "user.fields": ["verified", "profile_image_url", "name"]
-            });
-            // Enable auto reconnect
-            stream.autoReconnect = true;
+            //                 }).catch(async (err) => {
+            //                     console.log(err)
+            //                     await new Promise(resolve => setTimeout(resolve, 2000)) // sleep 5 seconds
 
-            stream.on(ETwitterStreamEvent.Data, async tweet => {
-                // to improve
-                getData(userData, userClient).then(user => {
-                    socket.emit("userData-changed", { reason: "twitter-stream-triggered", data: user })
-                })
-            });
+            //                     return tryConnection(++time)
+            //                 });
+
+            //             } catch (err) {
+            //                 console.log(err)
+            //                 await new Promise(resolve => setTimeout(resolve, 2000)) // sleep 5 seconds
+            //                 return tryConnection(++time)
+
+            //             }
+            //         } else {
+            //             return "errored"
+            //         }
+            //     }
+            //     tryConnection().then((stream) => {
+            //         if (stream != "errored") {
+
+            //             stream.autoReconnect = true;
+
+            //             stream.on(ETwitterStreamEvent.Data, async tweet => {
+            //                 var userTweeted = tweet.includes.users.filter(e => e.id == tweet.data.author_id)[0]
+            //                 var tweetData = tweet.data
+            //                 io.to(`twitter_${userTweeted.username}`).emit("data-monitored", { data: tweetData, reason: "twitter-stream-triggered" })
+            //             });
+            //         }
+
+            //     })
+            //     // Enable auto reconnect
+
+            // })
+
 
         }
         for (let i = 0; i < monitoredItemsDiscord.length; i++) {
@@ -597,7 +713,9 @@ io.on("connection", async (socket) => {
                 var { handle, retweets, quote_tweets } = twitterTask
                 var type_twitter = twitterTask.type
                 var monitoredId = uuid()
-                promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
+                var twitterUser = await getTwitterUserData(handle, userClient).then(result => result.data)
+                if (twitterUser?.id != undefined) {
+                    promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
                 VALUES 
                 (
                     "${_escpe(taskId)}",
@@ -607,7 +725,8 @@ io.on("connection", async (socket) => {
                     "${_escpe(quote_tweets)}",
                     "${_escpe(type_twitter)}"
                 ) `))
-                socket.join(`twitter_${handle}`)
+                    socket.join(`twitter_${handle}`)
+                }
 
             }
             for (let i = 0; i < discordTasks.length; i++) {
@@ -700,25 +819,31 @@ io.on("connection", async (socket) => {
             var type = action.type
             var data = action.data
             var allSockets = [...io.sockets.adapter.rooms].map(item => item[0])
+
             if (type == "twitter") {
                 var { handle, retweets, quote_tweets } = data
                 var type_twitter = data.type
-                await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
-            VALUES 
-            (
-                "${_escpe(taskId)}",
-                "${_escpe(monitoredId)}",
-                "${_escpe(handle)}",
-                "${_escpe(retweets)}",
-                "${_escpe(quote_tweets)}",
-                "${_escpe(type_twitter)}"
-            ) `)
-                socket.join(`twitter_${handle}`)
+                var twitterUser = await getTwitterUserData(handle, userClient).then(result => result.data)
+
+                if (twitterUser?.id != undefined) {
+                    await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
+                VALUES 
+                (
+                    "${_escpe(taskId)}",
+                    "${_escpe(monitoredId)}",
+                    "${_escpe(handle)}",
+                    "${_escpe(retweets)}",
+                    "${_escpe(quote_tweets)}",
+                    "${_escpe(type_twitter)}"
+    
+                ) `)
+                    socket.join(`twitter_${handle}`)
+                }
             } else if (type == "discord") {
                 var { guild_id, channel_id } = data
 
                 var server_details = supportedServers.filter(e => e.id == data.guild_id)[0] || {}
-                await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id ) 
+                await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id) 
             VALUES 
             (
                 "${_escpe(taskId)}",
@@ -788,8 +913,9 @@ io.on("connection", async (socket) => {
     })
 
 });
-function setInitialStoreValues() {
+async function setInitialStoreValues() {
     const Guilds = [...bot.guilds.cache].map(e => e[1])
+    var supportedServers = await PromisifiedQuery(`SELECT * FROM servers_added WHERE activate="true"`)
     Store.supportedServers = Guilds.map(supportedServer => {
         var nonCategoryChannel = [...supportedServer.channels.cache].map(e => e[1]).filter(e => e.constructor.name != "CategoryChannel").filter(e => e.viewable == true)
         return {
@@ -804,11 +930,13 @@ function setInitialStoreValues() {
                 }
             })
         }
-    })
-    Store.verifiedUsers = bot.guilds.cache.get(server_id)?.roles?.cache?.get(verified_role_id)?.members?.map(m => m.user.id) || [];
+    }).filter(server => supportedServers.filter(supportedServer => server.id == supportedServer.server_id).length > 0)
+    Store.verifiedUsers = bot.guilds.cache.get(server_id)?.roles?.cache?.get(verified_role_id)?.members?.map(m => m.user.tag) || [];
 
 }
 instrument(io, {
     auth: false
 });
+
+httpsServer.listen(443);
 httpServer.listen(isDev___ ? 3000 : 80);

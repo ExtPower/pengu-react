@@ -16,7 +16,7 @@ function App() {
         <Route path="/login" exact element={<Login />} />
 
         <Route path="/" element={<DashBoard />}>
-          <Route path="" element={<Navigate to="/home" />} />
+          <Route path="" element={<Navigate to="/feed" />} />
           <Route path="Home" element={<Home />} />
           <Route path="feed" element={<Feed />} />
           <Route path="wallet" element={<Wallet />} />

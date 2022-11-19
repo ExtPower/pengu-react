@@ -154,9 +154,9 @@ function Settings() {
           <Toggle />
         </div>
       </div>
-      <div className="settings-check-updates">
+      {/* <div className="settings-check-updates">
         <CheckUpdates />
-      </div>
+      </div> */}
     </div>
   );
 }

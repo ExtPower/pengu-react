@@ -43,14 +43,14 @@ function FeedTopbar() {
               </span>
             </div>{" "}
           </Link>
-          {isTaskDetailPage && (
+          {/* {isTaskDetailPage && (
             <div className="wallet innnfle clearall">
               <span className="walletbtn">
                 <img src={ClearAll}></img>
                 <label>Clear All</label>
               </span>
             </div>
-          )}
+          )} */}
         </div>
         <div className="topfeedtask">
           {userData.twitterAcc.twitter_id != null &&

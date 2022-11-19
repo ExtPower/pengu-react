@@ -15,7 +15,7 @@ function Testtable({ task }) {
       <div className="headitem">
         <div className="heaasind">
           <h4>{task.name}</h4>
-          <label>10 Alerts in the last hour</label>
+          <label>{task.results.filter(result => new Date(result.created_time_stamp).getTime() - new Date().getTime() <= 60 * 60 * 1000).length} Alerts in the last hour</label>
         </div>
         <div className="headButns">
           <img src={FeedPoint} alt="move" />
