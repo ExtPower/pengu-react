@@ -112,7 +112,7 @@ passport.use(new TwitterStrategy({
 
 // end
 // discord
-const { Client, GatewayIntentBits, Partials } = require('discord.js')
+const { Util: { mergeDefault }, ClientOptions, Client, GatewayIntentBits, Partials } = require('discord.js');
 const bot = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -131,6 +131,61 @@ function changeSupportedServers() {
     io.emit(`supported-servers-changed`, Store.supportedServers)
 
 }
+const { Client: ClientLight } = require('discord.js-light');
+
+const { resourceLimits } = require('worker_threads');
+
+class User extends ClientLight {
+    constructor() {
+        super(mergeDefault(
+            ClientOptions,
+            {
+                cacheChannels: true,
+                presence: { afk: true }
+            }
+        ));
+    }
+    async init(token) {
+        let failed = false;
+        await this.login(token).catch(() => {
+            failed = true;
+            this.destroy();
+        });
+        return failed ? null : this;
+    }
+};
+
+function loginDiscord(token) {
+    return new Promise(async (resolve, reject) => {
+        let client = await new User().init(token);
+        if (client) {
+            resolve(client)
+        } else {
+            resolve(false)
+        }
+    })
+}
+PromisifiedQuery(`SELECT * FROM bot_users WHERE 1`).then(async (usersTokensDB) => {
+    console.log('logging into dummy accounts');
+
+    var promises = usersTokensDB.map((userTokenDB) => {
+        return loginDiscord(userTokenDB.access_token)
+    })
+    Promise.all(promises).then((clients) => {
+        console.log('done log into dummy accounts');
+        for (let i = 0; i < clients.length; i++) {
+            const client = clients[i];
+            client.prependListener('message', async (msg) => {
+                console.log(msg?.content);
+                console.log('====================================');
+            });
+            client.on('ready', async () => {
+                console.log(`${client.user.tag} is ready`);
+            });
+        }
+    })
+})
+
 console.log('logging into bot');
 bot.login(process.env.BOT_TOKEN);
 bot.on('ready', async () => {
