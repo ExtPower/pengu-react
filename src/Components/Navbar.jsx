@@ -6,7 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import SearchIcon from "@mui/icons-material/Search";
 import InputAdornment from "@mui/material/InputAdornment";
-
+import DiscordUserPicture from "../assets/usericon.png";
 import { Logo, Logout, Switch, Copy_Adress, Cat_Bg } from "../assets/index";
 import { useSelector } from "react-redux";
 
@@ -113,7 +113,11 @@ const Navbar = ({ open, handleDrawerOpen, ComponenNamee }) => {
             <div className="last_inner">
               <div className="lastItem">
                 <img
-                  src={userData.discord_avatar}
+                  src={
+                    userData.discord_avatar.indexOf("null.png") == -1
+                      ? userData.discord_avatar
+                      : DiscordUserPicture
+                  }
                   style={{
                     height: "48px",
                     width: "48px",

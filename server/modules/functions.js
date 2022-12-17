@@ -9,7 +9,7 @@ function getDataWithoutTasks(user1) {
         delete user.id
         var twitterAcc = await PromisifiedQuery(`SELECT * FROM twitter_account WHERE user_id="${_escpe(userId)}"`).then((res) => res[0] || { twitter_id: null })
         user.twitterAcc = twitterAcc
-        if (Store.verifiedUsers.filter(e => e == user.username).length != 0) {
+        if (Store.verifiedUsers.filter(e => e == user.discord_id).length != 0) {
             user.verified = true
         }
 
@@ -184,7 +184,7 @@ function getData(user1, userClient = false, cache = {}) {
             task.results = task.results.sort((a, b) => new Date(b.created_time_stamp).getTime() - new Date(a.created_time_stamp).getTime())
 
         }
-        if (Store.verifiedUsers.filter(e => e == user.username).length != 0) {
+        if (Store.verifiedUsers.filter(e => e == user.discord_id).length != 0) {
             user.verified = true
         }
 

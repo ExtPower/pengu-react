@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require("http");
 var path = require('path');
-
+var cors = require("cors")
 const https = require("https");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
@@ -10,7 +10,7 @@ const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth, getDataWitho
 const app = express();
 const { TwitterApi, ETwitterStreamEvent } = require('twitter-api-v2');
 var fs = require("fs")
-var isDev___ = true
+var isDev___ = false
 var options = {
     key: fs.readFileSync(path.join(__dirname, "certificates/key.pem")),
     cert: fs.readFileSync(path.join(__dirname, "certificates/cert.pem"))
@@ -50,14 +50,15 @@ passport.use(new TwitterStrategy({
                     });
                 if (twitterUser.twitter_id != null) {
                     console.log("User exists");
-                    if (twitterUser.username != username || twitterUser.profile_picutre != profilePicutre || twitterUser.display_name != displayName || twitterUser.token != token || twitterUser.tokenSecret != tokenSecret) {
+                    if (user.user_id != twitterUser.user_id || twitterUser.username != username || twitterUser.profile_picutre != profilePicutre || twitterUser.display_name != displayName || twitterUser.token != token || twitterUser.tokenSecret != tokenSecret) {
                         await PromisifiedQuery(`UPDATE twitter_account SET 
+                            user_id="${_escpe(user.user_id)}",
                             username="${_escpe(username)}",
                             display_name="${_escpe(displayName)}",
                             profile_picutre="${_escpe(profilePicutre)}",
                             token="${_escpe(token)}",
                             tokenSecret="${_escpe(tokenSecret)}"
-                        WHERE user_id="${_escpe(user.user_id)}"`).then(() => {
+                        WHERE user_id="${_escpe(twitterUser.user_id)}"`).then(() => {
                             user = {
                                 ...user,
                                 username,
@@ -112,7 +113,8 @@ passport.use(new TwitterStrategy({
 
 // end
 // discord
-const { Util: { mergeDefault }, ClientOptions, Client, GatewayIntentBits, Partials } = require('discord.js');
+const { Util: { mergeDefault }, ClientOptions } = require('discord.js');
+const { Client, GatewayIntentBits, Partials } = require('discord.jsOg');
 const bot = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -123,12 +125,15 @@ const bot = new Client({
 
         // ...
     ],
-    partials: [Partials.Channel, Partials.GuildMember, Partials.Message],
+    partials: [Partials.Channel, Partials.GuildMember, Partials.Message, Partials.User],
 })
 
 function changeSupportedServers() {
-    setInitialStoreValues()
-    io.emit(`supported-servers-changed`, Store.supportedServers)
+    return new Promise(async (resolve, reject) => {
+        await setInitialStoreValues()
+        io.emit(`supported-servers-changed`, Store.supportedServers)
+        resolve(Store.supportedServers)
+    })
 
 }
 const { Client: ClientLight } = require('discord.js-light');
@@ -145,13 +150,15 @@ class User extends ClientLight {
             }
         ));
     }
-    async init(token) {
-        let failed = false;
-        await this.login(token).catch(() => {
-            failed = true;
-            this.destroy();
-        });
-        return failed ? null : this;
+    init(token) {
+        return new Promise(async (resolve, reject) => {
+            let failed = false;
+            await this.login(token).catch(() => {
+                failed = true;
+                this.destroy();
+            });
+            resolve(failed ? null : this)
+        })
     }
 };
 
@@ -159,13 +166,20 @@ function loginDiscord(token) {
     return new Promise(async (resolve, reject) => {
         let client = await new User().init(token);
         if (client) {
-            resolve(client)
+            client.on('ready', async () => {
+                console.log(`${client.user.tag} is ready`);
+                PromisifiedQuery(`UPDATE bot_users SET username='${_escpe(client.user.tag)}' WHERE access_token="${_escpe(token)}"`)
+                resolve(client)
+            });
         } else {
             resolve(false)
         }
     })
 }
-PromisifiedQuery(`SELECT * FROM bot_users WHERE 1`).then(async (usersTokensDB) => {
+var botsClient = []
+var initializedBot = false
+var initialized = false
+PromisifiedQuery(`SELECT * FROM bot_users WHERE activated="true"`).then(async (usersTokensDB) => {
     console.log('logging into dummy accounts');
 
     var promises = usersTokensDB.map((userTokenDB) => {
@@ -175,29 +189,100 @@ PromisifiedQuery(`SELECT * FROM bot_users WHERE 1`).then(async (usersTokensDB) =
         console.log('done log into dummy accounts');
         for (let i = 0; i < clients.length; i++) {
             const client = clients[i];
-            client.prependListener('message', async (msg) => {
-                console.log(msg?.content);
-                console.log('====================================');
-            });
-            client.on('ready', async () => {
-                console.log(`${client.user.tag} is ready`);
-            });
+            if (client != false) {
+                botsClient.push(client)
+                client.prependListener('message', async (message) => {
+                    if (message.channel.type != "dm") {
+                        var channelId = message.channelId || message.channel?.id
+                        var guildId = message.guildId || message.guild?.id
+
+                        createMessage(message).then((data) => {
+                            io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageCreate" })
+                        })
+                    }
+                });
+                client.on('messageDelete', async (message) => {
+                    var channelId = message.channelId || message.channel?.id
+                    var guildId = message.guildId || message.guild?.id
+
+                    deleteMessage(message).then(() => {
+                        io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageDelete" })
+                    })
+                });
+                client.on('messageUpdate', async (messageOld, messageNew) => {
+                    var channelId = messageNew.channelId || messageNew.channel?.id
+                    var guildId = messageNew.guildId || messageNew.guild?.id
+                    var messageOldSaved = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE msg_guild_id="${_escpe(guildId)}" AND  msg_channel_id="${_escpe(channelId)}" AND discord_msg_id="${_escpe(messageNew.id)}"`).then((res) => res[0] || messageNew)
+                    if (Number(messageOldSaved.edited_time_stamp) != messageNew.editedTimestamp) {
+                        deleteMessage(messageNew).then(() => {
+                            createMessage(messageNew).then((data) => {
+                                io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageUpdate" })
+                            })
+                        })
+                    }
+                });
+                client.on('guildCreate', async (guild) => {
+                    await PromisifiedQuery(`INSERT IGNORE INTO servers_added (server_id, server_name) VALUES ("${_escpe(guild.id)}","${_escpe(guild.name)}")`)
+                    changeSupportedServers()
+                });
+                client.on('guildDelete', async (guild) => {
+                    var availableGuilds = getAvailableGuilds()
+                    if (availableGuilds.filter(e => e.id == guild.id).length != 0) {
+                        return
+                    }
+                    await PromisifiedQuery(`DELETE FROM servers_added WHERE server_id="${_escpe(guild.id)}"`)
+                    changeSupportedServers()
+                });
+                client.on('guildUpdate', async (guildOld, guildNew) => {
+                    await PromisifiedQuery(`DELETE FROM servers_added WHERE server_id="${_escpe(guildNew.id)}"`)
+                    await PromisifiedQuery(`INSERT IGNORE INTO servers_added (server_id, server_name) VALUES ("${_escpe(guildNew.id)}","${_escpe(guildNew.name)}")`)
+                    changeSupportedServers()
+                });
+                client.on("guildMemberAdd", async (member) => {
+                    updateUsernamesMessagesDiscord(member.user)
+                })
+                client.on("userUpdate", async (userOld, userNew) => {
+                    updateUsernamesMessagesDiscord(userNew)
+                })
+                client.on("guildMemberUpdate", async (memberOld, memberNew) => {
+                    updateUsernamesMessagesDiscord(memberNew.user)
+                })
+            }
+        }
+        initialized = true
+        if (initializedBot == true) {
+            changeSupportedServers()
         }
     })
+    if (promises.length == 0) {
+        initialized = true
+        if (initializedBot == true) {
+            changeSupportedServers()
+        }
+
+    }
 })
 
 console.log('logging into bot');
 bot.login(process.env.BOT_TOKEN);
 bot.on('ready', async () => {
     console.log(`${bot.user.tag} is ready`);
-    changeSupportedServers()
+    botsClient.push(bot)
+    initializedBot = true
+    if (initialized == true) {
+        changeSupportedServers()
+    }
+
 });
 bot.on('guildCreate', async (guild) => {
-    console.log(guild);
     await PromisifiedQuery(`INSERT IGNORE INTO servers_added (server_id, server_name) VALUES ("${_escpe(guild.id)}","${_escpe(guild.name)}")`)
     changeSupportedServers()
 });
 bot.on('guildDelete', async (guild) => {
+    var availableGuilds = getAvailableGuilds()
+    if (availableGuilds.filter(e => e.id == guild.id).length != 0) {
+        return
+    }
     await PromisifiedQuery(`DELETE FROM servers_added WHERE server_id="${_escpe(guild.id)}"`)
     changeSupportedServers()
 });
@@ -219,8 +304,6 @@ bot.on("userUpdate", async (userOld, userNew) => {
 
 bot.on("guildMemberUpdate", async (memberOld, memberNew) => {
     updateUsernamesMessagesDiscord(memberNew.user)
-
-
 })
 function padTo2Digits(num) {
     return num.toString().padStart(2, '0');
@@ -251,8 +334,8 @@ function createMessage(message) {
             var author = message.author
             var msgDiscordId = message.id
             var msgId = uuid()
-            var channelId = message.channelId
-            var guildId = message.guildId
+            var channelId = message.channelId || message.channel?.id
+            var guildId = message.guildId || message.guild?.id
             var authorId = author.id
             var authorAvatar = author.avatar != null ? `https://cdn.discordapp.com/avatars/${authorId}/${author.avatar}.png` : author.defaultAvatarURL
             var authorName = author.tag
@@ -260,6 +343,7 @@ function createMessage(message) {
             var msgUrl = message.url
             var msgAttachements = [...message.attachments].map(e => e[1])
             var msgCreatedTimestamp = message.createdTimestamp
+            var msgEditedTimestamp = message.editedTimestamp
             var promises = []
             promises.push(PromisifiedQuery(`INSERT IGNORE INTO discord_msgs_found (
                 discord_msg_id,
@@ -272,6 +356,7 @@ function createMessage(message) {
                 msg_content,
                 msg_url,
                 created_time_stamp
+                ${msgEditedTimestamp ? ',edited_time_stamp' : ""}
             ) VALUES (
                 "${_escpe(msgDiscordId)}",
                 "${_escpe(msgId)}",
@@ -283,6 +368,7 @@ function createMessage(message) {
                 "${_escpe(msgContent)}",
                 "${_escpe(msgUrl)}",
                 "${_escpe(formatDate(new Date(new Date().toLocaleString("en-US", { timeZone: "GMT" }))))}"
+                ${msgEditedTimestamp ? ',"' + _escpe(msgEditedTimestamp) + '"' : ""}
             )`))
             for (let i = 0; i < msgAttachements.length; i++) {
                 const msgAttachement = msgAttachements[i];
@@ -325,8 +411,8 @@ function createMessage(message) {
 }
 
 bot.on('messageCreate', async (message) => {
-    var channelId = message.channelId
-    var guildId = message.guildId
+    var channelId = message.channelId || message.channel?.id
+    var guildId = message.guildId || message.guild?.id
 
     createMessage(message).then((data) => {
 
@@ -334,7 +420,7 @@ bot.on('messageCreate', async (message) => {
     })
 });
 function updateUsernamesMessagesDiscord(user = {}) {
-    var userId = user.id
+    var userId = user?.id || null
     if (userId == null) {
         return
     }
@@ -348,10 +434,10 @@ function deleteMessage(message) {
     updateUsernamesMessagesDiscord(message.author)
     return new Promise(async (resolve, reject) => {
         var msgDiscordId = message.id
-        var channelId = message.channelId
-        var guildId = message.guildId
+        var channelId = message.channelId || message.channel?.id
+        var guildId = message.guildId || message.guild?.id
         var promises = []
-        var data = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE discord_msg_id="${_escpe(msgDiscordId)}" AND msg_channel_id="${_escpe(channelId)}" AND msg_guild_id="${_escpe(guildId)}"`).then((results) => results[0])
+        var data = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE discord_msg_id="${_escpe(msgDiscordId)}" AND msg_channel_id="${_escpe(channelId)}" AND msg_guild_id="${_escpe(guildId)}"`).then((results) => results[0] || {})
         promises.push(PromisifiedQuery(`DELETE FROM discord_msgs_found WHERE discord_msg_id="${_escpe(msgDiscordId)}" AND msg_channel_id="${_escpe(channelId)}" AND msg_guild_id="${_escpe(guildId)}"`))
         promises.push(PromisifiedQuery(`DELETE FROM discord_msgs_attachements WHERE msg_id="${_escpe(data.msg_id)}"`))
         Promise.all(promises).then(() => {
@@ -361,22 +447,25 @@ function deleteMessage(message) {
 }
 
 bot.on('messageDelete', async (message) => {
-    var channelId = message.channelId
-    var guildId = message.guildId
+    var channelId = message.channelId || message.channel?.id
+    var guildId = message.guildId || message.guild?.id
 
     deleteMessage(message).then(() => {
         io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageDelete" })
     })
 });
-bot.on('messageUpdate', async (message) => {
-    var channelId = message.channelId
-    var guildId = message.guildId
+bot.on('messageUpdate', async (messageOld, messageNew) => {
+    var channelId = messageNew.channelId || messageNew.channel?.id
+    var guildId = messageNew.guildId || messageNew.guild?.id
 
-    deleteMessage(message).then(() => {
-        createMessage(message).then((data) => {
-            io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageUpdate" })
+    var messageOldSaved = await PromisifiedQuery(`SELECT * FROM discord_msgs_found WHERE msg_guild_id="${_escpe(guildId)}" AND  msg_channel_id="${_escpe(channelId)}" AND discord_msg_id="${_escpe(messageNew.id)}"`).then((res) => res[0] || messageNew)
+    if (Number(messageOldSaved.edited_time_stamp) != messageNew.editedTimestamp) {
+        deleteMessage(messageNew).then(() => {
+            createMessage(messageNew).then((data) => {
+                io.to(`discord_${guildId}_${channelId}`).emit("data-monitored", { type: "discord", guildId, channelId, reason: "messageUpdate" })
+            })
         })
-    })
+    }
 });
 bot.on("guildMemberUpdate", (oldMember, newMember) => {
     changeSupportedServers()
@@ -481,6 +570,9 @@ var sessionMiddleware = session({
     saveUninitialized: false,
     resave: false,
 })
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://localhost:3001',],
+}))
 app.use(sessionMiddleware);
 const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
 
@@ -500,13 +592,29 @@ app.get("/*", checkAuth, function (req, res) {
     res.sendFile(path.join(__dirname, 'static/website.html'));
 })
 
+if (isDev___ == false) {
+    app.all("*", function (req, res, next) {
+        console.log('req start: ', req.secure, req.hostname, req.originalurl, app.get('port'));
+        if (req.secure) {
+            return next();
+        }
+
+        res.redirect('https://' + req.hostname + ':' + app.get('secPort') + req.originalurl);
+    });
+
+}
 
 const httpServer = http.createServer(app);
 const httpsServer = https.createServer(options, app);
 
 const io = new Server(httpServer, {
-    cors: {
+    cors: isDev___ == false ? {
         origin: ["https://admin.socket.io/", "https://dashboard.penguplatform.com/"],
+        credentials: true
+
+    } : {
+        origin: "*",
+        methods: ["GET", "POST"],
         credentials: true
 
     }
@@ -538,8 +646,9 @@ appOnlyClient.v2.streamRules().then((rules) => {
         })
     }
 })
+
 io.on("connection", async (socket) => {
-    setInitialStoreValues()
+    await setInitialStoreValues()
     const userId = socket.request.session.passport.user || null
     var { user_id, email, username, discord_id, discord_avatar } = await PromisifiedQuery(`SELECT * FROM users WHERE user_id="${_escpe(userId)}"`).then((results) => results[0] || { user_id: null });
     var user = { user_id, email, username, discord_id, discord_avatar }
@@ -926,7 +1035,25 @@ io.on("connection", async (socket) => {
             })
 
         })
-
+        socket.on("check-channel", async (action, callback) => {
+            if (action.type != "discord") {
+                return callback(null)
+            }
+            async function checkChannel(index = 0, callback) {
+                try {
+                    var { guild_id, channel_id } = action.data
+                    var z = await botsClient[index].guilds.cache.get(guild_id).channels.fetch(channel_id)
+                    var msgs = await z.messages.fetch()
+                    callback(msgs)
+                } catch (error) {
+                    if (botsClient.length - 1 <= index) {
+                        return callback("errored")
+                    }
+                    checkChannel(index + 1, callback)
+                }
+            }
+            checkChannel(0, callback)
+        })
         socket.on("delete-monitored-item", async (action) => {
             var monitoredId = action.monitoredId
             var taskId = action.taskId
@@ -968,25 +1095,75 @@ io.on("connection", async (socket) => {
     })
 
 });
-async function setInitialStoreValues() {
-    const Guilds = [...bot.guilds.cache].map(e => e[1])
-    var supportedServers = await PromisifiedQuery(`SELECT * FROM servers_added WHERE activate="true"`)
-    Store.supportedServers = Guilds.map(supportedServer => {
-        var nonCategoryChannel = [...supportedServer.channels.cache].map(e => e[1]).filter(e => e.constructor.name != "CategoryChannel").filter(e => e.viewable == true)
-        return {
-            id: supportedServer.id,
-            name: supportedServer.name,
-            icon: `https://cdn.discordapp.com/icons/${supportedServer.id}/${supportedServer.icon}.webp`,
-            nameAcronym: supportedServer.nameAcronym,
-            channels: nonCategoryChannel.map(e => {
-                return {
-                    id: e.id,
-                    name: e.name
+function getAvailableGuilds() {
+    return new Promise(async (resolve, reject) => {
+        var currentGuilds = await PromisifiedQuery(`SELECT * FROM servers_added WHERE 1`)
+        var activatedBots = await PromisifiedQuery(`SELECT * FROM bot_users WHERE activated="true"`)
+        const guildsBots = botsClient.map((botClient) => {
+            if (activatedBots.filter(e => e.username == botClient.user.tag).length > 0 || botClient.user.bot == true) {
+                return [...botClient.guilds.cache].map(e => e[1]).map(guild => {
+                    var botClientViewableChannels = [...botClient.channels.cache].map(e => e[1]).filter(e => e.constructor.name == "TextChannel")
+                    return {
+                        ...guild,
+                        channels_viewable: botClientViewableChannels.filter(channel => channel.guild.id == guild.id)
+                    }
+                })
+            } else {
+                return []
+            }
+
+        })
+        var availableGuilds = []
+        for (let i = 0; i < guildsBots.length; i++) {
+            const guildsBot = guildsBots[i];
+            guildsBot.forEach((guildBot) => {
+                if (availableGuilds.filter(e => e.id == guildBot.id).length == 0) {
+                    availableGuilds.push(guildBot)
                 }
             })
         }
-    }).filter(server => supportedServers.filter(supportedServer => server.id == supportedServer.server_id).length > 0)
-    Store.verifiedUsers = bot.guilds.cache.get(server_id)?.roles?.cache?.get(verified_role_id)?.members?.map(m => m.user.tag) || [];
+        // var needDeleteGuilds = currentGuilds.filter(currentGuild => availableGuilds.filter(availableGuild => availableGuild.id == currentGuild.server_id).length == 0)
+        // var needDeletePromises = needDeleteGuilds.map((needDeleteGuild) => {
+        //     return PromisifiedQuery(`DELETE FROM servers_added WHERE server_id="${_escpe(needDeleteGuild.server_id)}"`)
+        // })
+        var needAdditionGuilds = availableGuilds.filter(availableGuild => currentGuilds.filter(currentGuild => currentGuild.server_id == availableGuild.id).length == 0)
+        var needAdditionPromises = needAdditionGuilds.map((needAdditionGuild) => {
+            return PromisifiedQuery(`INSERT INTO servers_added(server_id, server_name, link) VALUES ("${_escpe(needAdditionGuild.id)}","${_escpe(needAdditionGuild.name)}","https://discord.com/channels/${_escpe(needAdditionGuild.id)}")`)
+        })
+        var needUpdateGuilds = availableGuilds.filter(availableGuild => currentGuilds.filter(currentGuild => currentGuild.server_id == availableGuild.id).length != 0)
+        var needUpdatePromises = needUpdateGuilds.map((needUpdateGuild) => {
+            return PromisifiedQuery(`UPDATE servers_added SET server_name="${_escpe(needUpdateGuild.name)}" WHERE server_id="${_escpe(needUpdateGuild.id)}"`)
+        })
+
+        Promise.all([
+            // ...needDeletePromises,
+            ...needAdditionPromises], needUpdatePromises).then(() => {
+                resolve([...availableGuilds])
+            })
+    })
+}
+function setInitialStoreValues() {
+    return new Promise(async (resolve, reject) => {
+        var availableGuilds = await getAvailableGuilds()
+        var supportedServers = await PromisifiedQuery(`SELECT * FROM servers_added WHERE activate="true"`)
+        Store.supportedServers = availableGuilds.map(availableGuild => {
+            var nonCategoryChannel = [...availableGuild.channels.cache].map(e => e[1]).filter(e => e.constructor.name != "CategoryChannel")
+            return {
+                id: availableGuild.id,
+                name: availableGuild.name,
+                icon: `https://cdn.discordapp.com/icons/${availableGuild.id}/${availableGuild.icon}.webp`,
+                nameAcronym: availableGuild.nameAcronym,
+                channels: nonCategoryChannel.map(e => {
+                    return {
+                        id: e.id,
+                        name: e.name
+                    }
+                })
+            }
+        }).filter(server => supportedServers.filter(supportedServer => server.id == supportedServer.server_id).length > 0)
+        Store.verifiedUsers = bot.guilds.cache.get(server_id)?.roles?.cache?.get(verified_role_id)?.members?.map(m => m.id) || [];
+        resolve(Store)
+    })
 
 }
 instrument(io, {

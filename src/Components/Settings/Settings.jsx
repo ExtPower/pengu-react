@@ -10,6 +10,8 @@ import {
   Profileblack,
   Scenebg,
 } from "../../assets/index";
+import DiscordUserPicture from "../../assets/usericon.png";
+
 import "./settings.css";
 import { styled } from "@mui/material/styles";
 import MuiSwitch from "@mui/material/Switch";
@@ -117,7 +119,13 @@ function Settings() {
         <h5>Discord</h5>
         <div className="flexSettings">
           <div className="taskItem">
-            <img src={userData.discord_avatar}></img>
+            <img
+              src={
+                userData.discord_avatar.indexOf("null.png") == -1
+                  ? userData.discord_avatar
+                  : DiscordUserPicture
+              }
+            ></img>
             <span className="backkintel">
               <img src={Scenebg} />
             </span>

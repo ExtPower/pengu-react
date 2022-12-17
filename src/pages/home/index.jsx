@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { Loader } from "../../assets";
 import { useEffect } from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
@@ -23,6 +23,8 @@ import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import Tooltip from "@mui/material/Tooltip";
 import Navbar from "../../Components/Navbar";
+import "react-toastify/dist/ReactToastify.css";
+import DiscordUserPicture from "../../assets/usericon.png";
 
 import {
   Logo,
@@ -58,6 +60,8 @@ import InputAdornment from "@mui/material/InputAdornment";
 import { BorderAll } from "@mui/icons-material";
 import { io } from "socket.io-client";
 import { useSelector, useDispatch } from "react-redux";
+import { ToastContainer } from "react-toastify";
+
 const drawerWidth = 240;
 
 const openedMixin = (theme) => ({
@@ -134,7 +138,7 @@ const list = [
   {
     img: View,
     link: "feed",
-    text: ["Feed", "createTask"],
+    text: ["Feed", "createTask", "editTask/"],
     after: FeeedWhite,
   },
   {
@@ -150,16 +154,22 @@ const list = [
     after: SearchWhite,
   },
 ];
-var isDev___ = true;
+var isDev___ = false;
 export default function DashBoard() {
   const location = useLocation();
   const dispatch = useDispatch();
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
-  const [ComponenNamee, setComponenNamee] = React.useState("Home");
+  const [ComponenNamee, setComponenNamee] = React.useState("");
   const userData = useSelector((state) => state.userData);
   function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+    if (typeof string != "string") {
+      return string;
+    }
+    var stringCapitalized =
+      string?.charAt(0)?.toUpperCase() + string?.slice(1) || null || string;
+
+    return stringCapitalized;
   }
 
   var isComingsoon =
@@ -167,30 +177,29 @@ export default function DashBoard() {
     ComponenNamee.toLowerCase() == "opensea" ||
     ComponenNamee.toLowerCase() == "wallet";
   // const tasksChanges = useSelector((state) => state.tasksChanges);
-  const navigate = useNavigate();
   useEffect(() => {
     var pageName = location.pathname.slice(1);
     if (pageName && pageName.indexOf("/") != -1) {
-      if (userData.user_id != null) {
-        if (pageName.indexOf("editTask") != -1) {
+      if (pageName.indexOf("editTask") != -1) {
+        if (userData.user_id != null) {
           var taskId = pageName.split("/")[1];
           pageName =
-            userData.tasks?.filter((e) => e.task_id == taskId)?.[0]?.name ||
-            null;
+            userData.tasks?.filter((e) => e.task_id == taskId)?.[0]?.name || "";
         } else {
+          pageName = "Edit Task";
         }
-      } else {
-        pageName = "";
       }
+      setComponenNamee(capitalizeFirstLetter(pageName));
+    } else if (pageName.toLowerCase() == "createtask") {
+      setComponenNamee("Create Task");
+    } else {
+      setComponenNamee(capitalizeFirstLetter(pageName));
     }
-    setComponenNamee(capitalizeFirstLetter(pageName));
   }, [userData, location]);
   useEffect(() => {
     const socket = io(
       `${
-        isDev___
-          ? "http://localhost:3000"
-          : "https://dashboard.penguplatform.com"
+        isDev___ ? window.location.host : "https://dashboard.penguplatform.com"
       }`
     );
     dispatch({ type: "change-data", name: "socket", value: socket });
@@ -223,9 +232,6 @@ export default function DashBoard() {
           type: "change-data",
           value: action.data,
         });
-      });
-      socket.on("task-created", (action) => {
-        navigate(`/editTask/${action}`);
       });
     });
   }, []);
@@ -350,8 +356,9 @@ export default function DashBoard() {
                           className={
                             item.text.some(
                               (text) =>
-                                `/${text.toLowerCase()}` ===
-                                location.pathname.toLowerCase()
+                                location.pathname
+                                  .toLowerCase()
+                                  .indexOf(`/${text.toLowerCase()}`) == 0
                             )
                               ? "backlogg"
                               : ""
@@ -464,7 +471,11 @@ export default function DashBoard() {
                       <span className="proffillee">
                         {" "}
                         <img
-                          src={userData.discord_avatar}
+                          src={
+                            userData.discord_avatar.indexOf("null.png") == -1
+                              ? userData.discord_avatar
+                              : DiscordUserPicture
+                          }
                           style={{ borderRadius: "50%" }}
                         ></img>
                       </span>
@@ -535,6 +546,7 @@ export default function DashBoard() {
           {!userData.verified && <h1>You are not verified</h1>}
         </Box>
       )}
+      <ToastContainer />
     </div>
   );
 }
