@@ -5,12 +5,17 @@ var cors = require("cors")
 const https = require("https");
 const { Server } = require("socket.io");
 const { instrument } = require("@socket.io/admin-ui");
+const opensea = require("opensea-js");
+
+const { OpenSeaStreamClient } = require("@opensea/stream-js");
+const { WebSocket } = require("ws");
+
 const Store = require('./modules/Store.js');
 const { PromisifiedQuery, _escpe, getData, checkAuth, checkNotAuth, getDataWithoutTasks, getTwitterUserData } = require('./modules/functions.js');
 const app = express();
 const { TwitterApi, ETwitterStreamEvent } = require('twitter-api-v2');
 var fs = require("fs")
-var isDev___ = false
+var isDev___ = true
 var options = {
     key: fs.readFileSync(path.join(__dirname, "certificates/key.pem")),
     cert: fs.readFileSync(path.join(__dirname, "certificates/cert.pem"))
@@ -631,21 +636,59 @@ io.use((socket, next) => {
         next(new Error("unauthorized"));
     }
 });
-console.log("get rules");
+// console.log("get rules");
 
-appOnlyClient.v2.streamRules().then((rules) => {
-    if ((rules?.data || [])?.length != 0) {
-        console.log("update rules");
+// appOnlyClient.v2.streamRules().then((rules) => {
+//     if ((rules?.data || [])?.length != 0) {
+//         console.log("update rules");
 
-        appOnlyClient.v2.updateStreamRules({
-            delete: {
-                ids: rules.data?.map((ruleToAdd) => {
-                    return ruleToAdd.id
-                }) || []
-            },
-        })
+//         appOnlyClient.v2.updateStreamRules({
+//             delete: {
+//                 ids: rules.data?.map((ruleToAdd) => {
+//                     return ruleToAdd.id
+//                 }) || []
+//             },
+//         })
+//     }
+// })
+
+const OpenseaClient = new OpenSeaStreamClient({
+    token: process.env.OPENSEA_API_KEY,
+    network: process.env.USED_NET == "GOERLI" ? "testnet" : "mainnet",
+    connectOptions: {
+        transport: WebSocket,
+    },
+});
+var monitoredOpenSeaCollections = {
+
+}
+function trackOpenseaCollection(collection_name) {
+    if (monitoredOpenSeaCollections[`opensea_${collection_name}`] == null || monitoredOpenSeaCollections[`opensea_${collection_name}`] == undefined) {
+        monitoredOpenSeaCollections[`opensea_${collection_name}`] = OpenseaClient.onEvents(
+            collection_name,
+            [
+                "item_metadata_updated",// nft minted or updated
+                // "item_listed", //we listed the item (httinah bach itba3)
+                "item_sold", // b3na nft lxi wa7d
+                "item_transferred",// siftna nft lxiwa7d
+            ],
+            (event) => {
+                io.to(`opensea_${collection_name}`).emit("data-monitored", { type: "opnesea", collectionName: collection_name, reason: "openseaCollectionEvent", event })
+            }
+        );
+
     }
-})
+
+}
+function untrackOpenseaCollection(collection_name) {
+    if (!(monitoredOpenSeaCollections[`opensea_${collection_name}`] == null || monitoredOpenSeaCollections[`opensea_${collection_name}`] == undefined)) {
+        monitoredOpenSeaCollections[`opensea_${collection_name}`]()
+        setTimeout(() => {
+
+            monitoredOpenSeaCollections[`opensea_${collection_name}`] = null
+        }, 200)
+    }
+}
 
 io.on("connection", async (socket) => {
     await setInitialStoreValues()
@@ -674,6 +717,15 @@ io.on("connection", async (socket) => {
             userData: { ...userData, loading: true },
             supportedServers: Store.supportedServers,
         },
+    });
+    socket.on("disconnect", async (action) => {
+        var rooms = [...io.sockets.adapter.rooms].map(e => e[0])
+        var roomsFiltered = Object.keys(monitoredOpenSeaCollections).filter(e => monitoredOpenSeaCollections[e] != null).filter(e => rooms.indexOf(e) == -1)
+        for (let i = 0; i < roomsFiltered.length; i++) {
+            var roomName = roomsFiltered[i];
+            monitoredOpenSeaCollections[roomName]()
+            monitoredOpenSeaCollections[roomName] = null
+        }
     });
 
     getData(userData, userClient).then(async (userData1) => {
@@ -850,9 +902,8 @@ io.on("connection", async (socket) => {
             }
 
             socket.join(`opensea_${openseaTask.collection_name}`)
-
+            trackOpenseaCollection(openseaTask.collection_name)
         }
-
 
         socket.on("create-task", async (action) => {
             var taskId = uuid()
@@ -877,6 +928,10 @@ io.on("connection", async (socket) => {
                 var { handle, retweets, quote_tweets } = twitterTask
                 var type_twitter = twitterTask.type
                 var monitoredId = uuid()
+                if (handle.trim() == "") {
+                    continue
+                }
+
                 var twitterUser = await getTwitterUserData(handle, userClient).then(result => result.data)
                 if (twitterUser?.id != undefined) {
                     promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
@@ -894,10 +949,10 @@ io.on("connection", async (socket) => {
 
             }
             for (let i = 0; i < discordTasks.length; i++) {
-                var discordTask = discordTasks[i];
-                var { channel_id, guild_id } = discordTask
-                var server_details = supportedServers.filter(e => e.id == guild_id)[0] || {}
-                var monitoredId = uuid()
+                let discordTask = discordTasks[i];
+                let { channel_id, guild_id } = discordTask
+                let server_details = supportedServers.filter(e => e.id == guild_id)[0] || {}
+                let monitoredId = uuid()
                 promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_discord (task_id, monitored_id, channel_id, guild_id) 
                 VALUES 
                 (
@@ -910,10 +965,13 @@ io.on("connection", async (socket) => {
 
             }
             for (let i = 0; i < openseaTasks.length; i++) {
-                var openseaTask = openseaTasks[i];
-                var { collection_name } = openseaTask
-                var type_opensea = openseaTask.type
-                var monitoredId = uuid()
+                let openseaTask = openseaTasks[i];
+                let { collection_name } = openseaTask
+                let type_opensea = openseaTask.type || "collection"
+                let monitoredId = uuid()
+                if (collection_name.trim() == "") {
+                    continue
+                }
                 promises.push(PromisifiedQuery(`INSERT IGNORE INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
                 VALUES 
                 (
@@ -923,6 +981,8 @@ io.on("connection", async (socket) => {
                     "${_escpe(type_opensea)}"
                 ) `))
                 socket.join(`opensea_${collection_name}`)
+                trackOpenseaCollection(collection_name)
+
 
             }
             await Promise.all(promises)
@@ -989,7 +1049,7 @@ io.on("connection", async (socket) => {
                 var type_twitter = data.type
                 var twitterUser = await getTwitterUserData(handle, userClient).then(result => result.data)
 
-                if (twitterUser?.id != undefined) {
+                if (twitterUser?.id != undefined && handle.trim() != "") {
                     await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_twitter (task_id, monitored_id, handle, retweets, quote_tweets, type) 
                 VALUES 
                 (
@@ -1018,16 +1078,19 @@ io.on("connection", async (socket) => {
                 socket.join(`discord_${guild_id}_${channel_id}`)
             } else if (type == "opensea") {
                 var { collection_name } = data
-                var type_opensea = data.type
-                await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
-            VALUES 
-            (
-                "${_escpe(taskId)}",
-                "${_escpe(monitoredId)}",
-                "${_escpe(collection_name)}",
-                "${_escpe(type_opensea)}"
-            ) `)
-                socket.join(`opensea_${collection_name}`)
+                var type_opensea = data.type || "collection"
+                if (collection_name.trim() != "") {
+                    await PromisifiedQuery(`INSERT IGNORE INTO monitored_items_opensea (task_id, monitored_id, collection_name, type) 
+                VALUES 
+                (
+                    "${_escpe(taskId)}",
+                    "${_escpe(monitoredId)}",
+                    "${_escpe(collection_name)}",
+                    "${_escpe(type_opensea)}"
+                ) `)
+                    socket.join(`opensea_${collection_name}`)
+                    trackOpenseaCollection(collection_name)
+                }
             }
             getData(userData, userClient).then((userData1) => {
                 socket.emit("userData-changed", { reason: "add-monitored-item", data: userData1 })

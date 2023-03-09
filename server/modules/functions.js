@@ -1,6 +1,18 @@
 /* eslint-disable no-loop-func */
 var db = require("../modules/db")
 const Store = require('./Store.js');
+// const { OpenSeaPort, Network } = require('opensea-js');
+// const Web3 = require('web3');
+const axios = require("axios")
+// const infuraProjectId = '66838f15eb084303875acaf2959eac4b';
+// const providerGoerli = new Web3.providers.HttpProvider('https://goerli.infura.io')
+// const web3Gorli = new Web3(providerGoerli);
+// const provider = new Web3.providers.HttpProvider('https://mainnet.infura.io')
+// const web3 = new Web3(provider);
+const apiKey = process.env.OPENSEA_API_KEY;
+// const Web3WithInfura = new Web3('https://mainnet.infura.io/v3/66838f15eb084303875acaf2959eac4b'); // Replace with your Infura project ID
+// const Web3WithInfuraGeorli = new Web3('https://goerli.infura.io/v3/66838f15eb084303875acaf2959eac4b'); // Replace with your Infura project ID
+
 
 function getDataWithoutTasks(user1) {
     return new Promise(async (resolve, reject) => {
@@ -69,6 +81,12 @@ function getData(user1, userClient = false, cache = {}) {
         delete user.id
         var twitterAcc = await PromisifiedQuery(`SELECT * FROM twitter_account WHERE user_id="${_escpe(userId)}"`).then((res) => res[0] || { twitter_id: null })
         var tasks = await PromisifiedQuery(`SELECT * FROM tasks WHERE user_id="${_escpe(userId)}"`)
+        var userMonitoredItemsOpensea = await PromisifiedQuery(`SELECT monitored_items_opensea.*, tasks.user_id FROM monitored_items_opensea, tasks WHERE
+        tasks.task_id = monitored_items_opensea.task_id
+        AND 
+        tasks.user_id="${_escpe(userId)}"
+        `)
+
         var userMonitoredItemsTwitter = await PromisifiedQuery(`SELECT monitored_items_twitter.*, tasks.user_id FROM monitored_items_twitter, tasks WHERE
         tasks.task_id = monitored_items_twitter.task_id
         AND 
@@ -104,22 +122,40 @@ function getData(user1, userClient = false, cache = {}) {
         discord_msgs_attachements.msg_id = discord_msgs_found.msg_id
         `)
         var handlesNoDup = [...new Set(userMonitoredItemsTwitter.map(e => e.handle))]
-        var tasksWithDates = []
+        var collectionsNamesNoDup = [...new Set(userMonitoredItemsOpensea.map(e => e.collection_name))]
+        var twitterTasksWithDates = []
+        var openseaTasksWithDates = []
         for (let i = 0; i < handlesNoDup.length; i++) {
-            var twitterUserName = handlesNoDup[i];
-            var tasksWithUserName = userMonitoredItemsTwitter.filter(e => e.handle == twitterUserName)
-            var oldestTask = tasksWithUserName.sort((a, b) => new Date(a.created_time_stamp).getTime() - new Date(b.created_time_stamp).getTime())[0]
-            var oldestDate = new Date(oldestTask.created_time_stamp).toISOString()
-            tasksWithDates.push({
+            let twitterUserName = handlesNoDup[i];
+            let tasksWithUserName = userMonitoredItemsTwitter.filter(e => e.handle == twitterUserName)
+            let oldestTask = tasksWithUserName.sort((a, b) => new Date(a.created_time_stamp).getTime() - new Date(b.created_time_stamp).getTime())[0]
+            let oldestDate = new Date(oldestTask.created_time_stamp).toISOString()
+            twitterTasksWithDates.push({
                 handle: twitterUserName,
                 created_time_stamp: oldestDate
             })
         }
+        for (let i = 0; i < collectionsNamesNoDup.length; i++) {
+            let collectionNameNoDup = collectionsNamesNoDup[i];
+            let tasksWithCollectioName = userMonitoredItemsOpensea.filter(e => e.collection_name == collectionNameNoDup)
+            let oldestTask = tasksWithCollectioName.sort((a, b) => new Date(a.created_time_stamp).getTime() - new Date(b.created_time_stamp).getTime())[0]
+            let oldestDate = new Date(oldestTask.created_time_stamp).toISOString()
+            openseaTasksWithDates.push({
+                collection_name: collectionNameNoDup,
+                type: tasksWithCollectioName[0].type,
+                created_time_stamp: oldestDate
+            })
+
+        }
         var twitter_tweets = []
-        for (let i = 0; i < tasksWithDates.length; i++) {
-            const monitoredItemTwitter = tasksWithDates[i];
-            var handle = monitoredItemTwitter.handle
-            var dateCreated = monitoredItemTwitter.created_time_stamp
+        for (let i = 0; i < twitterTasksWithDates.length; i++) {
+            const monitoredItemTwitter = twitterTasksWithDates[i];
+            let handle = monitoredItemTwitter.handle || ""
+            let dateCreated = monitoredItemTwitter.created_time_stamp
+
+            if (handle.trim() == "") {
+                continue
+            }
             if (userClient) {
                 var twitterUser = await getTwitterUserData(handle, userClient).then(result => result.data)
                 var results = await getAllTweets(userClient, { user: twitterUser, start_time: dateCreated })
@@ -134,6 +170,83 @@ function getData(user1, userClient = false, cache = {}) {
             } else {
                 twitter_tweets.push({
                     handle,
+                    date: dateCreated,
+                    results: {}
+                })
+
+            }
+        }
+        var collections_events = []
+        for (let i = 0; i < openseaTasksWithDates.length; i++) {
+            const monitoredItemOpensea = openseaTasksWithDates[i];
+            let collection_name = monitoredItemOpensea.collection_name || ""
+            let dateCreated = monitoredItemOpensea.created_time_stamp
+            let type = monitoredItemOpensea.type || "collection"
+            if (collection_name.trim() == "") {
+                continue
+            }
+            const fromDate = new Date(dateCreated).getTime() // Replace with the start date of the period you want to monitor
+            const toDate = new Date().getTime() // Replace with the end date of the period you want to monitor
+            const openseaAxios = axios.create({
+                ...{
+                    baseURL: `https://${process.env.USED_NET == "MAIN" ? "" : "testnets-"}api.opensea.io/api/v1/`,
+
+                }, ...(process.env.USED_NET == "MAIN" ? { headers: { 'X-API-KEY': apiKey } } : {})
+            });
+            var collectionData = {}
+            if (type == "collection") {
+
+                collectionData = await openseaAxios.get(`/collection/${collection_name}`)
+                    .then((res) => res.data)
+                    .catch(err => {
+                        return {
+                            err,
+                            success: false
+                        }
+                    });
+
+                let collectionEvents = await openseaAxios.get(`/events?collection_slug=${collection_name}&only_opensea=true&offset=0&limit=50&occurred_after=${fromDate}&occurred_before=${toDate}`)
+                    .catch(err => {
+                        return {
+                            err,
+                            success: false
+                        }
+                    });
+                collectionData.events = collectionEvents
+            } else if (type == "account") {
+
+                collectionData = await openseaAxios.get(`/collection/${collection_name}`)
+                    .then((res) => res.data)
+                    .catch(err => {
+                        return {
+                            err,
+                            success: false
+                        }
+                    });
+
+                let collectionEvents = await openseaAxios.get(`/events?account_address=${collection_name}&only_opensea=true&offset=0&limit=50&occurred_after=${fromDate}&occurred_before=${toDate}`)
+                    .catch(err => {
+                        return {
+                            err,
+                            success: false
+                        }
+                    });
+                collectionData.events = collectionEvents
+
+            }
+            if (collectionData.success != false) {
+                userMonitoredItemsOpensea.filter(e => e.collection_name == collection_name).forEach(item => {
+                    item.collection = collectionData.collection
+                })
+
+                collections_events.push({
+                    collection_name,
+                    date: dateCreated,
+                    results: collectionData
+                })
+            } else {
+                collections_events.push({
+                    collection_name,
                     date: dateCreated,
                     results: {}
                 })
@@ -181,6 +294,16 @@ function getData(user1, userClient = false, cache = {}) {
                 .forEach((item) => {
                     task.results.push(...item)
                 })
+            collections_events.filter(collection_results => task.monitoredItems.opensea.filter(monitoredItem => monitoredItem.collection_name == collection_results.collection_name).length > 0).map(collection_results => {
+                var openSeaTask = task.monitoredItems.opensea.filter(monitoredItem => monitoredItem.collection_name == collection_results.collection_name)[0]
+                var results = collection_results?.results?.events?.asset_events || []
+                return results.filter(e => new Date(e.event_timestamp) > openSeaTask.created_time_stamp).map(result => { return { ...result, created_time_stamp: result.event_timestamp } })
+            })
+                .map(array => array.map((item) => { return { ...item, type: "opensea" } }) || [])
+                .forEach((item) => {
+                    task.results.push(...item)
+                })
+
             task.results = task.results.sort((a, b) => new Date(b.created_time_stamp).getTime() - new Date(a.created_time_stamp).getTime())
 
         }
@@ -223,6 +346,7 @@ function _escpe(val) {
     });
     return val;
 }
+
 
 function PromisifiedQuery(sql, pst) {
     if (db != undefined) {

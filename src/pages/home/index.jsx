@@ -154,7 +154,7 @@ const list = [
     after: SearchWhite,
   },
 ];
-var isDev___ = false;
+var isDev___ = true;
 export default function DashBoard() {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -198,8 +198,7 @@ export default function DashBoard() {
   }, [userData, location]);
   useEffect(() => {
     const socket = io(
-      `${
-        isDev___ ? window.location.host : "https://dashboard.penguplatform.com"
+      `${isDev___ ? window.location.host : "https://dashboard.penguplatform.com"
       }`
     );
     dispatch({ type: "change-data", name: "socket", value: socket });
@@ -252,12 +251,12 @@ export default function DashBoard() {
       style={
         userData.verified != true
           ? {
-              height: "100vh",
-              width: "100vw",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }
+            height: "100vh",
+            width: "100vw",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }
           : {}
       }
     >
@@ -522,8 +521,8 @@ export default function DashBoard() {
                       ? "unset"
                       : location.pathname === "/Home" ||
                         location.pathname === "/Wallet"
-                      ? "100%"
-                      : "calc(100% - 64px)",
+                        ? "100%"
+                        : "calc(100% - 64px)",
                 }}
               >
                 <Outlet />

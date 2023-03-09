@@ -2,7 +2,7 @@ import React from "react";
 import DiscordIcon from "../../assets/discordIcon.png";
 import DiscordBackground from "../../assets/discordBackground.webp";
 import "./login.css";
-var isDev___ = false;
+var isDev___ = true;
 export default function Login() {
   return (
     <div className="loginSection">
@@ -13,11 +13,10 @@ export default function Login() {
           <h3>Welcome to Penguplatform!</h3>
           <p>Login with discord</p>
           <a
-            href={`${
-              isDev___
+            href={`${isDev___
                 ? "http://localhost:3000"
                 : "https://dashboard.penguplatform.com"
-            }/auth/discord`}
+              }/auth/discord`}
           >
             Login
           </a>
