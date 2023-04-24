@@ -116,6 +116,42 @@ function Settings() {
             </div>
           )}
         </div>
+        <h5>Reddit</h5>
+        <div className="flexSettings">
+          {userData?.redditAcc?.reddit_id == null ? (
+            <div className="taskItem">
+              <button
+                class="sendMessage"
+                onClick={() => window.location.replace("/auth/reddit")}
+              >
+                Log in
+              </button>
+            </div>
+          ) : (
+            <div className="taskItem">
+              <img src={userData.twitterAcc.profile_picutre}></img>
+              <span className="backkintel">
+                <img src={Twitterbg} />
+              </span>
+              <label>{userData.twitterAcc.display_name}</label>
+            </div>
+          )}
+          {userData?.redditAcc?.reddit_id != null && (
+            <div className="settingsbtn">
+              <button>
+                <img src={Switch}></img>
+              </button>
+              <button>
+                <img
+                  src={Logout_gray}
+                  onClick={() =>
+                    window.location.replace("/auth/reddit/logout")
+                  }
+                ></img>
+              </button>
+            </div>
+          )}
+        </div>
         <h5>Discord</h5>
         <div className="flexSettings">
           <div className="taskItem">
