@@ -129,11 +129,11 @@ function Settings() {
             </div>
           ) : (
             <div className="taskItem">
-              <img src={userData.twitterAcc.profile_picutre}></img>
+              <img src={userData.redditAcc.profile_picutre}></img>
               <span className="backkintel">
                 <img src={Twitterbg} />
               </span>
-              <label>{userData.twitterAcc.display_name}</label>
+              <label>{userData.redditAcc.username}</label>
             </div>
           )}
           {userData?.redditAcc?.reddit_id != null && (

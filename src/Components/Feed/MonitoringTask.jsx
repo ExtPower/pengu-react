@@ -51,8 +51,10 @@ function MonitoringTask() {
   const [taskTwitterDetails, setTaskTwitterDetails] = useState({});
   const [taskDiscordDetails, setTaskDiscordDetails] = useState({});
   const [taskOpenSeaDetails, setTaskOpenSeaDetails] = useState({});
+  const [taskRedditDetails, setTaskRedditDetails] = useState({});
   const [monitoredItemsTwitter, setMonitoredItemsTwitter] = useState([]);
   const [monitoredItemsDiscord, setMonitoredItemsDiscord] = useState([]);
+  const [monitoredItemsReddit, setMonitoredItemsReddit] = useState([]);
   const [monitoredItemsOpenSea, setMonitoredItemsOpenSea] = useState([]);
 
   const [taskName, setTaskName] = useState("");
@@ -80,9 +82,8 @@ function MonitoringTask() {
   };
 
   const onFocus = ({ focused, isDisabled }) => {
-    const msg = `You are currently focused on option ${focused.label}${
-      isDisabled ? ", disabled" : ""
-    }`;
+    const msg = `You are currently focused on option ${focused.label}${isDisabled ? ", disabled" : ""
+      }`;
     setAriaFocusMessage(msg);
     return msg;
   };
@@ -112,6 +113,7 @@ function MonitoringTask() {
       setMonitoredItemsTwitter(taskData.monitoredItems.twitter);
       setMonitoredItemsDiscord(taskData.monitoredItems.discord);
       setMonitoredItemsOpenSea(taskData.monitoredItems.opensea);
+      setMonitoredItemsReddit(taskData.monitoredItems.reddit)
     }
   }, [
     isLoggedIn,
@@ -122,6 +124,7 @@ function MonitoringTask() {
     setMonitoredItemsTwitter,
     setMonitoredItemsDiscord,
     setMonitoredItemsOpenSea,
+    setMonitoredItemsReddit,
     setTaskName,
     setTaskData,
   ]);
@@ -199,6 +202,7 @@ function MonitoringTask() {
 
   // opensea
   const [collectionName, setCollectionName] = useState("");
+  const [subredditName, setSubredditName] = useState("");
   const [typeOfTaskOpensea, setTypeOfTaskOpensea] = useState(
     "collection_activity"
   );
@@ -223,7 +227,7 @@ function MonitoringTask() {
     }
     var data = {};
     var ogData = [];
-    var setFnc = function () {};
+    var setFnc = function () { };
     var isDub = false;
     if (type == "twitter") {
       data = { ...taskTwitterDetails, type: typeOfTaskTwitter };
@@ -245,6 +249,14 @@ function MonitoringTask() {
       isDub =
         ogData.filter((e) => e.collection_name == data.collection_name)
           .length != 0;
+    } else if (type == "reddit") {
+      data = { ...taskRedditDetails, };
+      ogData = monitoredItemsReddit;
+      setFnc = setMonitoredItemsReddit;
+      isDub =
+        ogData.filter((e) => e.subreddit_name == data.subreddit_name)
+          .length != 0;
+
     }
     if (!isDub) {
       socket.emit(
@@ -351,9 +363,8 @@ function MonitoringTask() {
                   <div className="btnsstask">
                     <label
                       for="tweets"
-                      className={`btntask ${
-                        typeOfTaskTwitter == "tweets" ? "activeTask" : ""
-                      }`}
+                      className={`btntask ${typeOfTaskTwitter == "tweets" ? "activeTask" : ""
+                        }`}
                     >
                       <input
                         name="typeOfTaskTwitter"
@@ -368,9 +379,8 @@ function MonitoringTask() {
                     </label>
                     <label
                       for="all_activity"
-                      className={`btntask ${
-                        typeOfTaskTwitter == "all_activity" ? "activeTask" : ""
-                      }`}
+                      className={`btntask ${typeOfTaskTwitter == "all_activity" ? "activeTask" : ""
+                        }`}
                     >
                       <input
                         name="typeOfTaskTwitter"
@@ -448,11 +458,10 @@ function MonitoringTask() {
                   <div className="btnsstask">
                     <label
                       for="channel_messages"
-                      className={`btntask ${
-                        typeOfTaskDiscord == "channel_messages"
-                          ? "activeTask"
-                          : ""
-                      }`}
+                      className={`btntask ${typeOfTaskDiscord == "channel_messages"
+                        ? "activeTask"
+                        : ""
+                        }`}
                     >
                       <input
                         name="typeOfTaskTwitter"
@@ -543,11 +552,10 @@ function MonitoringTask() {
                   <div className="btnsstask">
                     <label
                       for="collection_activity"
-                      className={`btntask ${
-                        typeOfTaskOpensea == "collection_activity"
-                          ? "activeTask"
-                          : ""
-                      }`}
+                      className={`btntask ${typeOfTaskOpensea == "collection_activity"
+                        ? "activeTask"
+                        : ""
+                        }`}
                     >
                       <input
                         name="typeOfTaskOpensea"
@@ -562,11 +570,10 @@ function MonitoringTask() {
                     </label>
                     <label
                       for="account_activity"
-                      className={`btntask ${
-                        typeOfTaskOpensea == "account_activity"
-                          ? "activeTask"
-                          : ""
-                      }`}
+                      className={`btntask ${typeOfTaskOpensea == "account_activity"
+                        ? "activeTask"
+                        : ""
+                        }`}
                     >
                       <input
                         name="typeOfTaskOpensea"
@@ -590,6 +597,27 @@ function MonitoringTask() {
                   <div
                     className="wallet innnfle eywhite task opensea"
                     onClick={(event) => addMonitoredItem("opensea")}
+                  >
+                    <span className="walletbtn task">
+                      <img src={EyeWhite}></img>
+                      <label>Monitor</label>
+                    </span>
+                  </div>
+                </div>
+                <div className="itemtTask">
+                  <h5>Reddit Monitor</h5>
+                  <img src={Opensea_button_grey}></img>
+
+                  <input
+                    type="text"
+                    value={subredditName}
+                    onInput={(event) => setSubredditName(event.target.value)}
+                    className="search task "
+                    placeholder="Enter Link"
+                  />
+                  <div
+                    className="wallet innnfle eywhite task reddit"
+                    onClick={(event) => addMonitoredItem("reddit")}
                   >
                     <span className="walletbtn task">
                       <img src={EyeWhite}></img>
@@ -673,6 +701,27 @@ function MonitoringTask() {
                             name={monitoredItem.name}
                             monitorItemId={monitoredItem.monitored_id}
                             type="opensea"
+                          />
+                        );
+                      })}
+                  </div>
+                </div>
+                <div className="itemCurrent">
+                  <img
+                    src={Opensea_grey}
+                    className="itemCurrentSocialIcon"
+                  ></img>
+                  <div className="itemCurrents">
+                    {monitoredItemsReddit &&
+                      monitoredItemsReddit.map((monitoredItem, index) => {
+                        return (
+                          <MonitoringItem
+                            icon={monitoredItem.icon}
+                            letter={monitoredItem.letter}
+                            isVerified={monitoredItem.isVerified}
+                            name={monitoredItem.name}
+                            monitorItemId={monitoredItem.monitored_id}
+                            type="reddit"
                           />
                         );
                       })}
