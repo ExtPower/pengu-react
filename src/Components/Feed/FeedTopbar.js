@@ -55,7 +55,7 @@ function FeedTopbar() {
         <div className="topfeedtask">
           {userData.twitterAcc.twitter_id != null &&
             <div className="taskItem">
-              <img src={userData.twitterAcc.profile_picutre}></img>
+              <img src={userData.twitterAcc.profile_picture}></img>
               <span className="backkintel">
                 <img src={Twitterbg} />
               </span>

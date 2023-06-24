@@ -93,7 +93,7 @@ function Settings() {
             </div>
           ) : (
             <div className="taskItem">
-              <img src={userData.twitterAcc.profile_picutre}></img>
+              <img src={userData.twitterAcc.profile_picture}></img>
               <span className="backkintel">
                 <img src={Twitterbg} />
               </span>
@@ -129,7 +129,7 @@ function Settings() {
             </div>
           ) : (
             <div className="taskItem">
-              <img src={userData.redditAcc.profile_picutre}></img>
+              <img src={userData.redditAcc.profile_picture}></img>
               <span className="backkintel">
                 <img src={Twitterbg} />
               </span>

@@ -79,11 +79,11 @@ function TaskResultItem({ result }) {
             <span className="opption">
             </span>
           </div>
-          {result.attachements.map((attachement) => {
-            if (attachement.height != "null") {
+          {result.attachments.map((attachment) => {
+            if (attachment.height != "null") {
               return (
                 <div className="mntiimag" style={{ maxWidth: "337px", maxHeight: "400px" }}>
-                  <img src={attachement.attachement_url} style={{ maxHeight: "inherit", maxWidth: "inherit", width: "unset", height: "unset", borderRadius: "10px" }} onClick={({ target }) => window.open(target.src)} ></img>
+                  <img src={attachment.attachment_url} style={{ maxHeight: "inherit", maxWidth: "inherit", width: "unset", height: "unset", borderRadius: "10px" }} onClick={({ target }) => window.open(target.src)} ></img>
                 </div>
 
               )
